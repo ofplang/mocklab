@@ -3,4 +3,4 @@
 # provider repositories it vendors). Each subpackage holds one feature's
 # base/client/errors/feature/types modules plus its .sila.xml and .proto -- and that .sila.xml
 # is what the server serves, so copying it is what makes this mock's feature definitions
-# byte-identical to the real machine's. See `specs/ardea_server/README.md`.
+# byte-identical to the real machine's. See `protocols/sila2/specs/ardea_server/README.md`.

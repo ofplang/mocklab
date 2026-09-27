@@ -23,10 +23,10 @@ SOFTWARE.
 ---
 
 The grant above covers this repository's own work. It does NOT cover the SiLA
-Feature definitions under `specs/ardea_server/`, nor the generated code under
-`servers/ardea_server/ardea_server/generated/`. Those files are verbatim copies
+Feature definitions under `protocols/sila2/specs/ardea_server/`, nor the generated code under
+`protocols/sila2/servers/ardea_server/ardea_server/generated/`. Those files are verbatim copies
 from the real Ardea machine's servers -- `ardea-sila2`, `bcap-sila2` and
 `kvcomplus-sila2` -- kept byte-identical on purpose, so that this mock stays a
 drop-in replacement for the machine it stands in for. They carry those projects'
-terms, not this one's. `specs/ardea_server/README.md` records where each file
+terms, not this one's. `protocols/sila2/specs/ardea_server/README.md` records where each file
 came from.
