@@ -5,6 +5,10 @@
 # SiLA2 lab. Without either, only the laboratory model starts. `docker compose --profile "*" down`
 # stops everything whatever was started (`down` otherwise only touches the active profiles).
 #
+# The project name is fixed rather than taken from the checkout's directory, so containers,
+# images and the network are `mocklab-*` wherever this repository is cloned.
+name: mocklab
+
 # Shared per-instrument definitions. NOTE: these anchors deliberately carry NO
 # `environment:` key. A service that sets `environment:` REPLACES the anchor's list
 # wholesale -- YAML merge keys (`<<:`) merge mappings but never deep-merge lists -- so

@@ -1,4 +1,4 @@
-[![CI](https://github.com/ofplang/sila2-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/ofplang/sila2-backend/actions/workflows/ci.yml)
+[![CI](https://github.com/ofplang/mocklab/actions/workflows/ci.yml/badge.svg)](https://github.com/ofplang/mocklab/actions/workflows/ci.yml)
 
 ## Overview
 

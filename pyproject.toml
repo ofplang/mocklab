@@ -5,9 +5,9 @@
 # `version` is kept as a placeholder because the repository is versioned by git tag
 # (v0.3.0 at the time of writing), not by this field.
 [project]
-name = "ofplang-sila2-backend"
+name = "ofplang-mocklab"
 version = "0.1.0"
-description = "A virtual laboratory of mock SiLA2 instrument servers over a shared world-state service."
+description = "A virtual laboratory of mock instruments, served over SiLA2 and LADS OPC UA, over a shared world-state service."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
