@@ -14,10 +14,13 @@
 `ardea-sila2` は DENSO ロボット（ORiN b-CAP）と KEYENCE PLC（KV COM+）を同時に駆動し、
 **Feature を 9 本公開する**。モックもその 9 本を配信する。
 
-**パッケージ名だけ他の 4 台の `<装置>_sila2` と揃えず `ardea_mock_sila2` にしている。** 実機のパッケージ名が
-`ardea_sila2`（distribution `ardea-sila2`）なので、揃えるとモックと実機が同じ import 名になり、両方を同じ環境に
-入れて突き合わせるとき（下記「Feature 定義の 2 つのコピー」、`docs/OPERATIONS.md`）やログのロガー名で取り違える。
-Feature 定義のソース置き場 `protocols/sila2/specs/ardea_server/` は改名していない（他の装置の specs も同様）。
+**SiLA2 サーバーのパッケージ名は 5 台とも `<装置>_mock_sila2`**（例: `ardea_mock_sila2`、`plateloc_mock_sila2`）。
+`mock` を入れているのは実機のサーバーと取り違えないためで、きっかけは Ardea だった: 実機のパッケージ名が
+`ardea_sila2`（distribution `ardea-sila2`）なので、`<装置>_sila2` ではモックと実機が同じ import 名になり、両方を
+同じ環境に入れて突き合わせるとき（下記「Feature 定義の 2 つのコピー」、`docs/OPERATIONS.md`）やログのロガー名で
+取り違える。他の 4 台も同じ規則に揃えてある。改名したのはパッケージ（とそのディレクトリ）だけで、Feature 名・
+コマンド名・サーバーの型名（`SILA_SERVER_TYPE`）・Feature 定義のソース置き場 `protocols/sila2/specs/<装置>_server/`
+は変えていない。
 
 | Feature | 出自 | モックの実装 |
 |---|---|---|
