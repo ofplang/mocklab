@@ -2,7 +2,7 @@
 
 Each module here is one instrument: its internal state, the rules its commands enforce, how long
 they take, how its status moves, and what it does to the shared world model. The SiLA2 servers
-(`sila2/servers/`) and the LADS OPC UA servers (`lads/servers/`) are thin adapters over these
+(`protocols/sila2/servers/`) and the LADS OPC UA servers (`protocols/lads/servers/`) are thin adapters over these
 classes, so the two protocols cannot drift apart in behaviour -- there is only one copy of it.
 
     centrifuge      Centrifuge       MicroplateCentrifugeController

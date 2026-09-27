@@ -5,7 +5,7 @@
 # and a KEYENCE PLC over the KV COM+ Library. It replaced the trolley arm as this lab's
 # transporter, and it is the one server here whose Feature definitions come from a real
 # instrument -- all nine of them, unchanged, so a workflow written against this mock can be
-# pointed at the machine (see `sila2/specs/ardea_server/README.md`).
+# pointed at the machine (see `protocols/sila2/specs/ardea_server/README.md`).
 #
 # WHAT IS MOCKED AND WHAT IS NOT. Only `LabwareService.Transfer` performs work, because it is
 # the one command a workflow needs from a transporter: carry a labware from one station to

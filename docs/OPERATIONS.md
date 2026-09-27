@@ -142,13 +142,13 @@ uv run pytest
 | `laboratory-client/tests/` | HTTP 転送層・環境変数からの設定読み取り |
 | `instruments/tests/` | 装置の振る舞い（実行開始点・Status 遷移・エラー種別とメッセージ・世界への作用・待ち時間）と Ardea の station map |
 | `tools/tests/` | 所要時間の切り出し、**設定ファイルと装置実装の齟齬検出**、各サーバーの Dockerfile が自分の device を切り出しているか |
-| `sila2/servers/ardea_server/tests/` | `sila2/specs/` の Feature 定義と**実際に配信される定義**の整合 |
+| `protocols/sila2/servers/ardea_server/tests/` | `protocols/sila2/specs/` の Feature 定義と**実際に配信される定義**の整合 |
 
 in-process で動くので compose スタックの起動は不要。方針は `docs/RULES.md`「テスト方針」。
 
-サーバー側のテストを追加する場合も同じ方針で `sila2/servers/<name>/tests/` に置き、ルート
+サーバー側のテストを追加する場合も同じ方針で `protocols/sila2/servers/<name>/tests/` に置き、ルート
 `[tool.pytest.ini_options]` の `testpaths` に 1 行追加する（**そのテストが対象を import する場合だけ**
-`pythonpath` にも足す）。現在は `sila2/servers/ardea_server/tests/` があり、Feature 定義をファイルとして
+`pythonpath` にも足す）。現在は `protocols/sila2/servers/ardea_server/tests/` があり、Feature 定義をファイルとして
 読むだけなので `testpaths` のみである。
 
 ## 静的チェック
@@ -191,7 +191,7 @@ realistic プロファイルでは `Transfer` が 30 秒かかるので、既定
 
 Ardea は実在機器のモックであり、配信する Feature 定義が実機と同一であることが存在理由である
 （`docs/SERVERS.md`）。**この同一性だけは自動テストで守れない**——実機リポジトリが手元に無いと比較できないため。
-単体テストが見ているのは `sila2/specs/` と配信版が互いに整合しているかどうかまでである。
+単体テストが見ているのは `protocols/sila2/specs/` と配信版が互いに整合しているかどうかまでである。
 
 したがって**実機側（`ardea-sila2`）が更新されたときは手で突き合わせる**。実機の submodule は
 `ardea-sila2` 側にあり、このリポジトリには無い:
@@ -201,12 +201,12 @@ cd ../ardea-sila2
 git submodule update --init --recursive     # 初回のみ
 sha256sum ardea_sila2/generated/*/*.sila.xml third_party/*/*/generated/*/*.sila.xml
 cd -
-sha256sum sila2/servers/ardea_server/ardea_server/generated/*/*.sila.xml
+sha256sum protocols/sila2/servers/ardea_server/ardea_server/generated/*/*.sila.xml
 ```
 
-9 本のハッシュが一致していればよい。差分があれば**ソース XML（`sila2/specs/ardea_server/`）と生成物の両方を
+9 本のハッシュが一致していればよい。差分があれば**ソース XML（`protocols/sila2/specs/ardea_server/`）と生成物の両方を
 コピーし直し**、`uv run pytest` と上記の直接接続確認を回す。実機のどのブランチから取ったかは
-`sila2/specs/ardea_server/README.md` に記録してある。
+`protocols/sila2/specs/ardea_server/README.md` に記録してある。
 
 ## ログ確認
 

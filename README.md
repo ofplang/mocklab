@@ -60,13 +60,13 @@ docker compose up -d --force-recreate
 | Directory | Contents |
 |---|---|
 | `instruments/` | What each mock instrument does -- state, rules, timing, status, world-model effects -- independent of the protocol serving it |
-| `sila2/servers/` | SiLA2 server package per mock instrument: a thin adapter over `instruments/` |
+| `protocols/sila2/servers/` | SiLA2 server package per mock instrument: a thin adapter over `instruments/` |
 | `laboratory_model/` | Shared world-state service (devices, spots, opaque device state) |
 | `laboratory-client/` | Shared package the servers use to reach the world model |
 | `config/` | The world's seed and the command duration profiles |
 | `tools/` | Build-time helpers (the duration slicer) |
 | `samples/` | Client scripts that check a running stack |
-| `sila2/specs/` | Source SiLA Feature XML. **Not edited** -- a mock has to keep the real instrument's Feature to be a drop-in replacement |
+| `protocols/sila2/specs/` | Source SiLA Feature XML. **Not edited** -- a mock has to keep the real instrument's Feature to be a drop-in replacement |
 | `external/` | Optional, local only (`.gitignore`d): reference sources kept to read, never a development target. Absent from a fresh clone |
 
 ## World model
@@ -170,7 +170,7 @@ laboratory model on `8001`. Between containers, use the service's container name
 ## License
 
 MIT ([LICENSE](LICENSE)), with one carve-out stated there: the SiLA Feature definitions under
-`sila2/specs/ardea_server/` and the generated code under
-`sila2/servers/ardea_server/ardea_server/generated/` are verbatim copies from the real machine's
+`protocols/sila2/specs/ardea_server/` and the generated code under
+`protocols/sila2/servers/ardea_server/ardea_server/generated/` are verbatim copies from the real machine's
 servers, so they carry those projects' terms rather than this repository's.
-`sila2/specs/ardea_server/README.md` records where each file came from.
+`protocols/sila2/specs/ardea_server/README.md` records where each file came from.

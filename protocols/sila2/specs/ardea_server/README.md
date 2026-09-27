@@ -31,9 +31,9 @@ submodule for that would tie this repository's checkout to a private hardware dr
 
 These are the **source** files. What the server actually serves is the sila2 code
 generator's normalisation of them, which lives beside the generated code in
-`sila2/servers/ardea_server/ardea_server/generated/<feature>/<Feature>.sila.xml` and was copied
+`protocols/sila2/servers/ardea_server/ardea_server/generated/<feature>/<Feature>.sila.xml` and was copied
 from the real server's generated tree -- so the served bytes are the real server's bytes.
-`sila2/servers/ardea_server/tests/test_feature_definitions.py` checks that the two describe the
+`protocols/sila2/servers/ardea_server/tests/test_feature_definitions.py` checks that the two describe the
 same feature, which is what would catch a hand edit here or a stale copy there.
 
 ## Regenerating

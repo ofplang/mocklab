@@ -6,7 +6,7 @@
 x-ardea-server: &ardea-server
   build:
     context: .
-    dockerfile: sila2/servers/ardea_server/Dockerfile
+    dockerfile: protocols/sila2/servers/ardea_server/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
@@ -16,7 +16,7 @@ x-ardea-server: &ardea-server
 x-microplate-centrifuge-server: &microplate-centrifuge-server
   build:
     context: .
-    dockerfile: sila2/servers/microplate_centrifuge_server/Dockerfile
+    dockerfile: protocols/sila2/servers/microplate_centrifuge_server/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
@@ -26,7 +26,7 @@ x-microplate-centrifuge-server: &microplate-centrifuge-server
 x-plateloc-server: &plateloc-server
   build:
     context: .
-    dockerfile: sila2/servers/plateloc_server/Dockerfile
+    dockerfile: protocols/sila2/servers/plateloc_server/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
@@ -36,7 +36,7 @@ x-plateloc-server: &plateloc-server
 x-plate-seal-remover-server: &plate-seal-remover-server
   build:
     context: .
-    dockerfile: sila2/servers/automated_plate_seal_remover_server/Dockerfile
+    dockerfile: protocols/sila2/servers/automated_plate_seal_remover_server/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
@@ -46,7 +46,7 @@ x-plate-seal-remover-server: &plate-seal-remover-server
 x-thermal-cycler-server: &thermal-cycler-server
   build:
     context: .
-    dockerfile: sila2/servers/automated_thermal_cycler_server/Dockerfile
+    dockerfile: protocols/sila2/servers/automated_thermal_cycler_server/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:

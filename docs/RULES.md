@@ -38,7 +38,7 @@
 - **対象は手書きコードのみ**。sila2 のコードジェネレータが所有する成果物は再生成対象なので除外する:
   `generated/` 配下、および各サーバーの `__main__.py`。コメント方針の「生成コードには手を入れない」と同じ線引きである。
 - **SiLA2 サーバーの `__main__.py` は 5 台すべてで完全に同一の純生成物に保つ**（同一性は
-  `sha256sum sila2/servers/*/*/__main__.py` で確認できる）。サーバーへの設定は**すべて環境変数で渡し**、
+  `sha256sum protocols/sila2/servers/*/*/__main__.py` で確認できる）。サーバーへの設定は**すべて環境変数で渡し**、
   読み取りと検証は手書き側（`laboratory-client`・`instruments/`・`server.py`）に置く。
   **生成物に手を入れたくなったら、まず手書き側に寄せられないかを検討する。**
   なお sila2 が生成する `__main__.py` にはオプション追加の拡張点が無いので、CLI フラグを足すには
@@ -62,7 +62,7 @@
   `laboratory_model` に相当するのは物理世界であり、**インターフェイスが存在しない**。
   クライアントがこのサービスを触ると、そのコードは実機に持ち運べなくなり、
   「実機と同一 Feature でなければ drop-in 置換テストにならない」という原則（§静的チェック方針の
-  `sila2/specs/` 不変ルールと同じ思想）が崩れる。
+  `protocols/sila2/specs/` 不変ルールと同じ思想）が崩れる。
 
 **誰が `laboratory_model` に触ってよいか**:
 
@@ -95,7 +95,7 @@
 - **`instruments/`（パッケージ `mock_instruments`）が装置の振る舞いの唯一の持ち主**である: 内部状態、
   コマンドが課す規則（引数検証・前提条件・実行順序）、所要時間、Status の遷移、世界モデルへの作用。
   sila2 も asyncua も import しない。
-- **`sila2/servers/` の feature 実装は薄い adapter** であり、SiLA2 の語彙（コマンド・プロパティ・
+- **`protocols/sila2/servers/` の feature 実装は薄い adapter** であり、SiLA2 の語彙（コマンド・プロパティ・
   observable command instance・defined error）と `mock_instruments` の間を写すだけにする。
   **振る舞いを adapter に書いてはならない**（書けばもう一方のプロトコルとずれる）。
   例外は「そのプロトコル固有の語彙」だけ: Ardea の未実装 22 コマンドの拒否（SiLA2 の Feature 定義に揃える
@@ -124,19 +124,23 @@
 - 利用側（labcode 等）がこのスタックを相手に書く統合スクリプトも同じ規約にする。ただし
   **SiLA2 だけを使い、`laboratory_model` には触らない**（§このリポジトリと利用側の関係）。
   検証は装置自身の getter と、ワークフロー自身の出力から取る。どちらも実機に存在する。
-- **統合スクリプトを回すべきタイミング**: seed の spot 名を変えたとき／`sila2/specs/` の Feature を差し替えたとき／
+- **統合スクリプトを回すべきタイミング**: seed の spot 名を変えたとき／`protocols/sila2/specs/` の Feature を差し替えたとき／
   `sila2` のバージョンを上げたとき。継ぎ目には自動回帰が無いので、この 3 つは手で回す。
 - **テストは対象コードの隣に置く**（`laboratory_model/tests/`、`laboratory-client/tests/`、`instruments/tests/`、`tools/tests/`、
-  `sila2/servers/<name>/tests/`）。**依存とテスト設定はルートの `pyproject.toml` に集約する**。
+  `protocols/sila2/servers/<name>/tests/`）。**依存とテスト設定はルートの `pyproject.toml` に集約する**。
   1 コンポーネントごとに `testpaths` に 1 エントリ足し、**そのテストが対象を import する場合だけ**
-  `pythonpath` にも足す（`sila2/servers/ardea_server/tests/` はファイルを読むだけなので `testpaths` のみ）。
+  `pythonpath` にも足す（`protocols/sila2/servers/ardea_server/tests/` はファイルを読むだけなので `testpaths` のみ）。
 - `--import-mode=importlib` を使う。同名のテストファイルが複数コンポーネントに現れても衝突しないため。
   **副作用として、リポジトリ直下の project ディレクトリ名を、その中のパッケージ名と同じにしてはならない**。
   pytest は rootdir からの相対パスでテストモジュール名を決めるので、`foo/tests/` は `foo.tests.<module>` として
   import され、project ディレクトリ自身が空の namespace package としてその名前を占有してしまう
   （`laboratory-client/` をハイフン名にしてある理由。`laboratory_model/` が `app/` を、`instruments/` が
   `mock_instruments/` を格納しているのも同型）。
-  なお `sila2/servers/<name>/tests/` は入れ子（`sila2.servers.<name>.tests`）になるのでこの制約を受けない。
+  なお `protocols/sila2/servers/<name>/tests/` は入れ子（`protocols.sila2.servers.<name>.tests`）になるのでこの制約を受けない。
+  **同じ理由で、依存ライブラリと同名のディレクトリをリポジトリ直下に置いてはならない。** SiLA2 側を
+  `protocols/sila2/` と入れ子にしているのはこのためで、以前の直下 `sila2/` では、pytest のセッション内で
+  テストモジュール名 `sila2.servers...` が空の namespace package `sila2` を登録し、**実ライブラリ `sila2` を
+  隠していた**（`import sila2.client` が失敗することを実測）。
 - 単体テストで**期待値を意図的に固定しておく**のは有効な手段である。設計変更で落ちるべきテストは
   落ちるように書き、変更時に必ず気づけるようにする。
 - 再現性が要る検証（時間・周期・TTL など）は、fake clock を使った単体テスト側に置く。
@@ -170,7 +174,7 @@
   そのまま配信し、実装するのは `LabwareService.Transfer` と 3 プロパティのみ。残り 22 コマンドは
   `NotImplementedError`（undefined execution error）で拒否する。詳細と理由は `docs/SERVERS.md`。
 - ローカル実行の基本系は Docker Compose を前提とする。
-- **`sila2/specs/` の Feature XML は編集しない。** これらは実機のモックであり、実機と同一の Feature 定義でなければ
+- **`protocols/sila2/specs/` の Feature XML は編集しない。** これらは実機のモックであり、実機と同一の Feature 定義でなければ
   drop-in 置換テストにならない。多 spot 化などの改修も、コマンド署名と Feature を変えずサーバー内部で行う。
   **Ardea の生成コードも再生成せず実機からコピーする**（配信される XML をバイト単位で同一に保つ唯一の方法）。
   実機側が更新されたときの突き合わせ手順は `docs/OPERATIONS.md`。

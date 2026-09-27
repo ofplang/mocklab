@@ -15,14 +15,14 @@
 
 | ディレクトリ | 内容 |
 |---|---|
-| `sila2/servers/` | モック SiLA2 サーバー 5 台（Microplate Centrifuge / PlateLoc / Automated Plate Seal Remover / Automated Thermal Cycler の 4 装置＋搬送役 Ardea）。生成コードと、`instruments/` へ写すだけの薄い feature 実装（adapter）。**Ardea だけは実在する機器のモック**で、実機の Feature 定義 9 本をそのまま配信する（`docs/SERVERS.md`）。**station（ワークフローの入口・出口）にサーバーは無い** — ラックには commandable なものが無く、seed が spot を宣言すれば足りる |
+| `protocols/sila2/servers/` | モック SiLA2 サーバー 5 台（Microplate Centrifuge / PlateLoc / Automated Plate Seal Remover / Automated Thermal Cycler の 4 装置＋搬送役 Ardea）。生成コードと、`instruments/` へ写すだけの薄い feature 実装（adapter）。**Ardea だけは実在する機器のモック**で、実機の Feature 定義 9 本をそのまま配信する（`docs/SERVERS.md`）。**station（ワークフローの入口・出口）にサーバーは無い** — ラックには commandable なものが無く、seed が spot を宣言すれば足りる |
 | `instruments/` | **プロトコル非依存の装置の振る舞い**（パッケージ `mock_instruments`）。状態・規則・所要時間・Status 遷移・世界への作用を 1 か所に持ち、SiLA2 版と LADS OPC UA 版（導入中）の両方がこれを呼ぶ（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」） |
 | `laboratory_model/` | 共有の世界状態サービス |
 | `laboratory-client/` | サーバーが世界モデルに到達するための共有パッケージ（HTTP 転送層と環境変数からの設定読み取り）。**世界の意味づけは共有せず各サーバーに残す** |
 | `config/` | 世界のシードと、コマンド所要時間のプロファイル |
 | `tools/` | ビルド時ヘルパ（所要時間の切り出し） |
 | `samples/` | 実サービスに直接接続する確認スクリプト |
-| `sila2/specs/` | 各サーバーの SiLA Feature 定義 XML（**編集しない**。実機と同一でなければ drop-in 置換テストにならない） |
+| `protocols/sila2/specs/` | 各サーバーの SiLA Feature 定義 XML（**編集しない**。実機と同一でなければ drop-in 置換テストにならない） |
 | `external/` | 直接の開発対象ではない参考用の外部実装 |
 
 ローカル実行の基本形は `docker-compose.yml`。手順は `docs/OPERATIONS.md`。

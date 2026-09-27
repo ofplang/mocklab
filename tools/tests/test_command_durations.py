@@ -50,11 +50,11 @@ DEVICE_BY_MODULE = {
 # instrument is, or the server would be timed as something else; `test_each_server_image_slices_
 # its_own_device` holds the two together.
 MODULE_BY_SERVER = {
-    "sila2/servers/microplate_centrifuge_server": "centrifuge",
-    "sila2/servers/automated_thermal_cycler_server": "thermal_cycler",
-    "sila2/servers/plateloc_server": "plateloc",
-    "sila2/servers/automated_plate_seal_remover_server": "seal_remover",
-    "sila2/servers/ardea_server": "ardea",
+    "protocols/sila2/servers/microplate_centrifuge_server": "centrifuge",
+    "protocols/sila2/servers/automated_thermal_cycler_server": "thermal_cycler",
+    "protocols/sila2/servers/plateloc_server": "plateloc",
+    "protocols/sila2/servers/automated_plate_seal_remover_server": "seal_remover",
+    "protocols/sila2/servers/ardea_server": "ardea",
 }
 
 # Calls that make a command wait, each taking the command's name as a string literal: the wait
@@ -156,7 +156,7 @@ def test_each_server_image_slices_its_own_device(server: str) -> None:
 
 def test_every_server_directory_is_covered() -> None:
     # So a server added later cannot escape the check above by not being listed.
-    dockerfiles = REPOSITORY_ROOT.glob("*/servers/*/Dockerfile")
+    dockerfiles = REPOSITORY_ROOT.glob("protocols/*/servers/*/Dockerfile")
     on_disk = {path.parent.relative_to(REPOSITORY_ROOT).as_posix() for path in dockerfiles}
 
     assert on_disk == set(MODULE_BY_SERVER)

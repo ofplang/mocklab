@@ -44,7 +44,7 @@ COPY instruments/ /tmp/instruments/
 RUN pip install --no-cache-dir /tmp/instruments && rm -rf /tmp/instruments
 
 # This server's own package.
-COPY sila2/servers/automated_plate_seal_remover_server/ /tmp/automated_plate_seal_remover_server/
+COPY protocols/sila2/servers/automated_plate_seal_remover_server/ /tmp/automated_plate_seal_remover_server/
 RUN pip install --no-cache-dir /tmp/automated_plate_seal_remover_server && rm -rf /tmp/automated_plate_seal_remover_server
 
 # This server's command durations, sliced out of the lab-wide file above.

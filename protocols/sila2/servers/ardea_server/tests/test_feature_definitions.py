@@ -2,12 +2,12 @@
 
 The Ardea server is this lab's one mock of an instrument that exists, and the whole point of it
 is that its nine SiLA Feature definitions are the machine's own, unchanged (`docs/RULES.md`,
-`sila2/specs/ardea_server/README.md`). Two copies of each definition live in this repository, and
+`protocols/sila2/specs/ardea_server/README.md`). Two copies of each definition live in this repository, and
 they have different jobs:
 
-* `sila2/specs/ardea_server/<Feature>.sila.xml` -- the source file, copied from `ardea-sila2`. It is
+* `protocols/sila2/specs/ardea_server/<Feature>.sila.xml` -- the source file, copied from `ardea-sila2`. It is
   documentation of what was agreed; nothing reads it at run time.
-* `sila2/servers/ardea_server/ardea_server/generated/<feature>/<Feature>.sila.xml` -- the sila2 code
+* `protocols/sila2/servers/ardea_server/ardea_server/generated/<feature>/<Feature>.sila.xml` -- the sila2 code
   generator's normalisation of that same file, copied from the real server's generated tree.
   **This** is what the server serves and what a client receives.
 
@@ -32,9 +32,10 @@ import xml.etree.ElementTree as ElementTree
 
 import pytest
 
-REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[4]
-SPECS_DIRECTORY = REPOSITORY_ROOT / "sila2" / "specs" / "ardea_server"
-GENERATED_DIRECTORY = REPOSITORY_ROOT / "sila2" / "servers" / "ardea_server" / "ardea_server" / "generated"
+REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[5]
+SPECS_DIRECTORY = REPOSITORY_ROOT / "protocols" / "sila2" / "specs" / "ardea_server"
+SERVER_DIRECTORY = REPOSITORY_ROOT / "protocols" / "sila2" / "servers" / "ardea_server"
+GENERATED_DIRECTORY = SERVER_DIRECTORY / "ardea_server" / "generated"
 
 # The nine features the real Ardea server exposes: its own four, the b-CAP provider's three and
 # the KV COM+ provider's two. Written out rather than globbed, so a missing file fails the test
@@ -138,6 +139,7 @@ def test_transfer_is_the_command_the_mock_implements() -> None:
 
     implementation = (
         REPOSITORY_ROOT
+        / "protocols"
         / "sila2"
         / "servers"
         / "ardea_server"

@@ -2,15 +2,15 @@
 
 ## 概要
 
-`sila2/servers/` 配下の各 SiLA2 サーバーは、生成コードを土台にした薄い feature 実装（adapter）を持ち、装置の振る舞いそのものは `instruments/`（`mock_instruments`）に置く（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」）。実機制御そのものよりも、
+`protocols/sila2/servers/` 配下の各 SiLA2 サーバーは、生成コードを土台にした薄い feature 実装（adapter）を持ち、装置の振る舞いそのものは `instruments/`（`mock_instruments`）に置く（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」）。実機制御そのものよりも、
 **実機と同一の Feature 定義を保ったまま**、SiLA2 経由の接続・コマンド実行・状態遷移を確認しやすくすることを狙う。
 
-**`sila2/specs/` の Feature XML は編集しない。** 実機と同一でなければ drop-in 置換テストにならないため、
+**`protocols/sila2/specs/` の Feature XML は編集しない。** 実機と同一でなければ drop-in 置換テストにならないため、
 多 spot 化などの改修もコマンド署名と Feature を変えずサーバー内部で行う。
 
 ## Ardea サーバー（実在機器のモック）
 
-`sila2/servers/ardea_server/` は**実在する機器 Ardea のモック**であり、他の 4 台とは性格が違う。実機の
+`protocols/sila2/servers/ardea_server/` は**実在する機器 Ardea のモック**であり、他の 4 台とは性格が違う。実機の
 `ardea-sila2` は DENSO ロボット（ORiN b-CAP）と KEYENCE PLC（KV COM+）を同時に駆動し、
 **Feature を 9 本公開する**。モックもその 9 本を配信する。
 
@@ -23,12 +23,12 @@
 | `VariableService` / `TaskService` / `RobotService` | `bcap-sila2`（b-CAP プロバイダ） | 全コマンド未実装 |
 | `DeviceService` / `ConnectionService` | `kvcomplus-sila2`（KV COM+ プロバイダ） | 全コマンド未実装 |
 
-**Feature 定義の 2 つのコピー。** `sila2/specs/ardea_server/` にあるのは**ソース** XML（実機リポジトリからの
-コピー・読むためのもの）。実際に配信されるのは `sila2/servers/ardea_server/ardea_server/generated/<feature>/`
+**Feature 定義の 2 つのコピー。** `protocols/sila2/specs/ardea_server/` にあるのは**ソース** XML（実機リポジトリからの
+コピー・読むためのもの）。実際に配信されるのは `protocols/sila2/servers/ardea_server/ardea_server/generated/<feature>/`
 にある codegen 正規化版で、これも実機の生成物からコピーしたものなので**実機が配信するバイト列と同一**である。
-両者が同じ Feature を表しているかは `sila2/servers/ardea_server/tests/test_feature_definitions.py` が検査する。
+両者が同じ Feature を表しているかは `protocols/sila2/servers/ardea_server/tests/test_feature_definitions.py` が検査する。
 **生成コードは再生成せずコピーする**（それが同一性を構造的に保証する唯一の方法）。出典と手順は
-`sila2/specs/ardea_server/README.md`。
+`protocols/sila2/specs/ardea_server/README.md`。
 
 **未実装コマンドは `NotImplementedError`** を投げる。クライアントには
 `UndefinedExecutionError: Method is not implemented by the server` が届く（**この文言は sila2 が用意するもので、
