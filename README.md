@@ -34,7 +34,9 @@ by the seed, and a rack has nothing commandable about it. 50056 is free because 
 used to sit there offered only `Reset` and a `Status` that never changed; Ardea keeps 50057 so
 anything already pointed at the lab's transporter still finds it.
 
-All servers start with `--insecure --verbose`.
+All servers start with `--insecure --verbose`: plain gRPC for SiLA2, and for LADS OPC UA an
+endpoint with security mode `None` and anonymous access. A client therefore connects without
+certificates to either.
 
 **The dependency runs one way.** This repository knows nothing about whoever drives it; a
 client depends only on "several ordinary SiLA2 (or LADS OPC UA) services are running". `laboratory_model`
@@ -74,12 +76,15 @@ docker compose up -d --force-recreate
 | Directory | Contents |
 |---|---|
 | `instruments/` | What each mock instrument does -- state, rules, timing, status, world-model effects -- independent of the protocol serving it |
-| `protocols/sila2/servers/` | SiLA2 server package per mock instrument: a thin adapter over `instruments/` |
+| `protocols/sila2/servers/` | SiLA2 server package per mock instrument (`<instrument>_mock_sila2`): a thin adapter over `instruments/` |
+| `protocols/lads/servers/` | LADS OPC UA server package per mock instrument (`<instrument>_mock_lads`): which command becomes which node, over `instruments/` |
+| `protocols/lads/lads_common/` | What every LADS server shares: the bundled NodeSets, the state machines, programs and results, functions, StatusCode mapping, server start-up |
 | `laboratory_model/` | Shared world-state service (devices, spots, opaque device state) |
 | `laboratory-client/` | Shared package the servers use to reach the world model |
 | `config/` | The world's seed and the command duration profiles |
 | `tools/` | Build-time helpers (the duration slicer) |
-| `samples/` | Client scripts that check a running stack |
+| `samples/` | Client scripts that check a running stack, over either protocol |
+| `docs/` | The documents listed under *Documentation* below |
 | `protocols/sila2/specs/` | Source SiLA Feature XML. **Not edited** -- a mock has to keep the real instrument's Feature to be a drop-in replacement |
 | `external/` | Optional, local only (`.gitignore`d): reference sources kept to read, never a development target. Absent from a fresh clone |
 
@@ -161,6 +166,10 @@ uv run python samples/run_lads_roundabout.py                 # the same circuit 
 uv run python samples/run_parity.py                          # both protocols must end the same way
 ```
 
+The LADS samples share a small asyncio client, `samples/lads_client.py` -- a readable example of
+driving a LADS functional unit (`StartProgram` and waiting for the Result, Stop/Abort/Clear,
+covers, set-points) without any client framework.
+
 `run_roundabout.py` puts one item at `station.slot1` and moves it through
 `seal-remover.stage`, `plateloc.stage`, `thermal-cycler.block`, `centrifuge.deck` and back. Each
 leg is one `LabwareService.Transfer` on Ardea. The movement goes through the servers; the world
@@ -190,6 +199,13 @@ LADS server on `opc.tcp://localhost:<port>/` (`4841`-`4844` and `4847`) and the 
 `8001`. Between containers, use the service's container name with the *internal* port (`50052`
 for SiLA2 servers, `4840` for LADS servers, `8001` for `laboratory-model`); the published ports are
 for host access and are not usable verbatim from inside another container.
+
+The LADS ports sit next to OPC UA's registered port (4840), so another OPC UA stack on the same
+machine may already hold them. Publish them elsewhere with an override file rather than by
+editing `docker-compose.yml` -- for example a local `docker-compose.lads-ports.yml` that gives each
+LADS service `ports: !override ["14841:4840"]` (and so on), started with
+`docker compose -f docker-compose.yml -f docker-compose.lads-ports.yml --profile lads up -d`. A
+client then has to be pointed at the new ports.
 
 ## License
 
