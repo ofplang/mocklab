@@ -142,6 +142,7 @@ uv run pytest
 | `laboratory-client/tests/` | HTTP 転送層・環境変数からの設定読み取り |
 | `instruments/tests/` | 装置の振る舞い（実行開始点・Status 遷移・エラー種別とメッセージ・世界への作用・待ち時間）と Ardea の station map |
 | `protocols/lads/lads_common/tests/` | LADS 共通部品。スレッドと asyncio の橋渡し、および**実際の asyncua サーバーとクライアントを同一プロセスで立てて**、Program・FunctionalUnitState・StatusCode・TargetValue 書き込みの対応を確認する（NodeSet の読み込みで 1 サーバー約 6 秒かかるため、スイート全体の所要時間の大半はここ） |
+| `protocols/lads/servers/tests/` | LADS 版 4 装置の実際の `build()` を 1 つの asyncua サーバーに載せ、公開する Program・property 名・Function・vendor 変数と、装置の規則（範囲・順序・thermal cycler の Stop まで Running）を確認する |
 | `tools/tests/` | 所要時間の切り出し、**設定ファイルと装置実装の齟齬検出**、各サーバーの Dockerfile が自分の device を切り出しているか |
 | `protocols/sila2/servers/ardea_server/tests/` | `protocols/sila2/specs/` の Feature 定義と**実際に配信される定義**の整合 |
 
