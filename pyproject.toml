@@ -110,6 +110,7 @@ known-first-party = [
     "microplate_centrifuge_lads",
     "mock_instruments",
     "plateloc_lads",
+    "run_lads_roundabout",
     "run_roundabout",
     "slice_durations",
 ]

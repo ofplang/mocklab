@@ -1,3 +1,10 @@
+# WHICH PROTOCOL. The same mock instruments are served over SiLA2 (profile `sila2`) and over
+# LADS OPC UA (profile `lads`); the laboratory model has no profile and always starts. Choose
+# with `--profile sila2`, `--profile lads` or both, or set COMPOSE_PROFILES -- copying
+# `.env.example` to `.env` makes `sila2` the default, so a plain `docker compose up` starts the
+# SiLA2 lab. Without either, only the laboratory model starts. `docker compose --profile "*" down`
+# stops everything whatever was started (`down` otherwise only touches the active profiles).
+#
 # Shared per-instrument definitions. NOTE: these anchors deliberately carry NO
 # `environment:` key. A service that sets `environment:` REPLACES the anchor's list
 # wholesale -- YAML merge keys (`<<:`) merge mappings but never deep-merge lists -- so
@@ -135,6 +142,7 @@ services:
   # pure generator output.
   sila2-server-1:
     <<: *microplate-centrifuge-server
+    profiles: ["sila2"]
     ports:
       - "50052:50052"
     environment:
@@ -146,6 +154,7 @@ services:
 
   sila2-server-2:
     <<: *plateloc-server
+    profiles: ["sila2"]
     ports:
       - "50053:50052"
     environment:
@@ -157,6 +166,7 @@ services:
 
   sila2-server-3:
     <<: *plate-seal-remover-server
+    profiles: ["sila2"]
     ports:
       - "50054:50052"
     environment:
@@ -168,6 +178,7 @@ services:
 
   sila2-server-4:
     <<: *thermal-cycler-server
+    profiles: ["sila2"]
     ports:
       - "50055:50052"
     environment:
@@ -203,6 +214,7 @@ services:
   # editing it takes a `--force-recreate`, not a rebuild. See the ardea server's `stations.py`.
   ardea-server-1:
     <<: *ardea-server
+    profiles: ["sila2"]
     ports:
       - "50057:50052"
     environment:
@@ -213,10 +225,8 @@ services:
       - SILA_SERVER_NAME=Ardea
       - ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,Base4=plateloc.stage,Base5=centrifuge.deck,Base6=thermal-cycler.block
 
-  # --- LADS OPC UA servers. The same four instruments, served over OPC UA with the LADS
-  # --- information model instead of SiLA2 (`docs/LADS_MAPPING.md`). They sit behind the `lads`
-  # --- profile, so a plain `docker compose up` starts exactly what it always did; add
-  # --- `--profile lads` (or COMPOSE_PROFILES=lads) to start them alongside.
+  # --- LADS OPC UA servers. The same five, served over OPC UA with the LADS information model
+  # --- instead of SiLA2 (`docs/LADS_MAPPING.md`), behind the `lads` profile.
   #
   # Each acts on the same world-model location as its SiLA2 counterpart and bakes in the same
   # durations, so the two protocols behave alike. Running both at once is possible -- they share

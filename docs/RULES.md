@@ -56,7 +56,7 @@
 
 - **このリポジトリは利用側を一切知らない。** import も参照もしない。テストは単体で完結し、
   利用側を必要としない。
-- **利用側が依存するのは「一般的な SiLA2 サービスが複数立ち上がっている」という点のみ**である。
+- **利用側が依存するのは「一般的な SiLA2 サービス（または LADS OPC UA サービス）が複数立ち上がっている」という点のみ**である。
 - **`laboratory_model` はワークフロークライアントから触られてはならない。**
   最大の理由は**実機に差し替えたときに対応物が無いこと**。SiLA2 サーバーの有無とやり取りは実機でも成立するが、
   `laboratory_model` に相当するのは物理世界であり、**インターフェイスが存在しない**。
@@ -89,8 +89,9 @@
 
 ## プロトコルと装置の振る舞いの分離
 
-同じモック装置を **SiLA2 と LADS OPC UA の 2 つのプロトコルで配信する**（LADS 版は導入中。
-`dev-notes/02-lads-extension.md`）。挙動を揃えるため、**装置の振る舞いは 1 か所にしか書かない**。
+同じモック装置を **SiLA2 と LADS OPC UA の 2 つのプロトコルで配信する**（対応表と LADS 由来の差分は
+`docs/LADS_MAPPING.md`）。挙動を揃えるため、**装置の振る舞いは 1 か所にしか書かない**。
+揃っていることは `samples/run_parity.py` が実サービス相手に確かめる。
 
 - **`instruments/`（パッケージ `mock_instruments`）が装置の振る舞いの唯一の持ち主**である: 内部状態、
   コマンドが課す規則（引数検証・前提条件・実行順序）、所要時間、Status の遷移、世界モデルへの作用。
@@ -100,6 +101,10 @@
   **振る舞いを adapter に書いてはならない**（書けばもう一方のプロトコルとずれる）。
   例外は「そのプロトコル固有の語彙」だけ: Ardea の未実装 22 コマンドの拒否（SiLA2 の Feature 定義に揃える
   ためのもの）や `InvalidStation` への変換は SiLA2 adapter の仕事である。
+- **`protocols/lads/servers/` も同じく薄い**。各サーバーは装置のどのコマンドを LADS のどのノード（Program・
+  Function・vendor 変数）として見せるかだけを決め、共通の仕組みは `protocols/lads/lads_common/` に置く。
+  FunctionalUnitState は独自の規則を持たず装置の Status から導く。LADS の規約上どうしても SiLA2 と
+  変わる点は `docs/LADS_MAPPING.md`「LADS 由来の差分」に**必ず列挙する**（列挙されていない差は不具合）。
 - **実行開始点を保存する。** 各コマンドは `execution.begin()` を、SiLA2 の `begin_execution()` が呼ばれて
   いた位置で呼ぶ。検査がその前か後か（＝失敗時に Status が Error になるか）はコマンドごとに違い、
   クライアントから観測できる挙動の一部である。
@@ -122,7 +127,7 @@
     実サービスに繋ぐため CI には載せない。
 - **`samples/` は失敗時に非ゼロ終了する**。`run_all_smoke_tests.py` が束ねる。目視確認ではなく検査として成立させる。
 - 利用側（labcode 等）がこのスタックを相手に書く統合スクリプトも同じ規約にする。ただし
-  **SiLA2 だけを使い、`laboratory_model` には触らない**（§このリポジトリと利用側の関係）。
+  **SiLA2（または LADS OPC UA）だけを使い、`laboratory_model` には触らない**（§このリポジトリと利用側の関係）。
   検証は装置自身の getter と、ワークフロー自身の出力から取る。どちらも実機に存在する。
 - **統合スクリプトを回すべきタイミング**: seed の spot 名を変えたとき／`protocols/sila2/specs/` の Feature を差し替えたとき／
   `sila2` のバージョンを上げたとき。継ぎ目には自動回帰が無いので、この 3 つは手で回す。
@@ -162,7 +167,7 @@
 
 ## 現在のプロジェクト前提
 
-- このリポジトリは、モック SiLA2 サーバー 5 台（4 装置＋搬送役）、共有の世界状態サービス `laboratory_model`、
+- このリポジトリは、モック装置 5 台（4 装置＋搬送役）を SiLA2 と LADS OPC UA の両方で配信するサーバー群（`protocols/`）、共有の世界状態サービス `laboratory_model`、
   サーバーが世界モデルに到達するための共有パッケージ `laboratory-client`、
   プロトコル非依存の装置の振る舞い `instruments/`（§プロトコルと装置の振る舞いの分離）、
   ビルド時ヘルパ `tools/` を含む。
@@ -173,7 +178,7 @@
 - **5 台のうち Ardea だけは実在する機器のモック**である（搬送役）。実機 `ardea-sila2` の Feature 定義 9 本を
   そのまま配信し、実装するのは `LabwareService.Transfer` と 3 プロパティのみ。残り 22 コマンドは
   `NotImplementedError`（undefined execution error）で拒否する。詳細と理由は `docs/SERVERS.md`。
-- ローカル実行の基本系は Docker Compose を前提とする。
+- ローカル実行の基本系は Docker Compose を前提とする。プロトコルは profile（`sila2` / `lads`）で選ぶ。既定は各自が `.env.example` を `.env` にコピーして決める（`.env` はコミットしない）。
 - **`protocols/sila2/specs/` の Feature XML は編集しない。** これらは実機のモックであり、実機と同一の Feature 定義でなければ
   drop-in 置換テストにならない。多 spot 化などの改修も、コマンド署名と Feature を変えずサーバー内部で行う。
   **Ardea の生成コードも再生成せず実機からコピーする**（配信される XML をバイト単位で同一に保つ唯一の方法）。
@@ -189,4 +194,5 @@
 | `docs/LABORATORY_MODEL.md` | 世界モデルの状態モデル・API・シード・ライフサイクル |
 | `docs/SERVERS.md` | 各装置と各 SiLA2 サーバーの実装方針 |
 | `docs/TIMING.md` | コマンド所要時間の設定と同時実行ガード |
+| `docs/LADS_MAPPING.md` | LADS OPC UA 版の対応表と LADS 由来の差分 |
 | `docs/OPERATIONS.md` | 起動・停止・確認・リセットの運用手順 |

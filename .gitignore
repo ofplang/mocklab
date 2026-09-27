@@ -25,6 +25,8 @@ wheels/
 build/
 .env
 .env.*
+# The template for `.env` is the one committed file of that family.
+!.env.example
 scripts/
 .codex
 

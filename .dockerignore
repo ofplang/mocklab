@@ -13,6 +13,9 @@
 
 # Assistant working notes and local docs are not part of any image.
 CLAUDE.md
+# The local compose defaults and their template configure docker compose, not an image.
+.env
+.env.example
 dev-notes
 
 # Sample scripts and specs are run from the host against the running stack, never inside

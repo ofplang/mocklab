@@ -2,13 +2,31 @@
 
 ## 起動と停止
 
+同じ装置を **SiLA2（profile `sila2`）と LADS OPC UA（profile `lads`）** のどちらで配信するかを
+compose の profile で選ぶ。`laboratory-model` は profile を持たず常に起動する。
+
 ```bash
-docker compose up -d      # laboratory-model ＋ SiLA2 サーバー 5 台
-docker compose down
-docker compose ps
+docker compose --profile sila2 up -d                  # laboratory-model ＋ SiLA2 サーバー 5 台
+docker compose --profile lads up -d                   # laboratory-model ＋ LADS サーバー 5 台
+docker compose --profile sila2 --profile lads up -d   # 両方（同じ世界を共有）
+docker compose --profile "*" down                     # 起動した profile に関係なく全部止める
+docker compose --profile "*" ps
 ```
 
-各 SiLA2 サーバーは `--insecure --verbose` で起動する。
+- **既定を決めたいときは `.env.example` を `.env` にコピーする**（中身は `COMPOSE_PROFILES=sila2`）。
+  `.env` は git 管理外なので、チェックアウトごとに決めてよい。`.env` があれば素の `docker compose up -d` で
+  SiLA2 構成が立つ（labcode の SiLA2 例の手順はこれを前提にしてよい）。シェルの `COMPOSE_PROFILES` や
+  `--profile` は `.env` より優先される。
+- **profile を何も指定しないと `laboratory-model` だけが起動する。** サーバーが立たないのはこのため。
+- `down` / `ps` / `logs` は**有効な profile のサービスしか対象にしない**。起動時と違う profile で
+  `down` すると止め残しが出るので、止めるときは `--profile "*"` を使う。
+- 両方を同時に起動した場合、同時実行ガードはプロトコルごとに別なので、同じ装置を SiLA2 と LADS から
+  同時に操作することは止められない。
+
+各サーバーは `--insecure --verbose` で起動する。LADS 版の対応表と SiLA2 との差分は `docs/LADS_MAPPING.md`。
+
+**以下の節のコマンドは、`.env`（または `COMPOSE_PROFILES`）で profile が決まっている前提で書いてある。**
+決めていなければ各コマンドに `--profile sila2` などを付ける。
 
 ### ソースを変更したとき
 
@@ -113,7 +131,7 @@ Ardea は station 名（`Base1`..`Base6`）で呼ばれ、環境変数 `ARDEA_ST
 
 ```bash
 # docker-compose.yml の ardea-server-1 の ARDEA_STATIONS を編集してから
-docker compose up -d --force-recreate ardea-server-1
+docker compose --profile sila2 up -d --force-recreate ardea-server-1   # LADS 版は ardea-lads-server-1
 docker compose logs --tail=20 ardea-server-1     # 不正なら起動時に落ちる
 ```
 
@@ -177,13 +195,29 @@ uv run mypy
 単体テストとは目的が異なる（前者は規則、こちらは配備）。**失敗時は非ゼロ終了する。**
 
 ```bash
-uv run python samples/run_all_smoke_tests.py     # 5 台まとめて
+uv run python samples/run_all_smoke_tests.py     # SiLA2 の 5 台まとめて
 uv run python samples/laboratory_model_smoke.py  # 世界モデル単体
-uv run python samples/run_roundabout.py          # 装置を一周する統合確認
+uv run python samples/run_roundabout.py          # 装置を一周する統合確認（SiLA2）
 ```
 
 正常時は `All smoke tests passed.` / `Laboratory model smoke test passed.` /
 `Roundabout workflow passed.` と表示される。
+
+LADS 版（profile `lads` で起動しておく）:
+
+```bash
+uv run python samples/run_all_smoke_tests.py --protocol lads   # LADS の 5 台まとめて（both で両方）
+uv run python samples/run_lads_roundabout.py                    # 同じ一周を LADS で
+```
+
+**parity 検査**（両 profile を起動しておく）: 同じ一周を SiLA2 → LADS の順に流し、一周後の世界、
+装置の値の変化、同じ失敗に対する理由の文言が一致することを確かめる。
+
+```bash
+uv run python samples/run_parity.py
+```
+
+**sample を並列に走らせてはいけない。** 各 sample は冒頭で世界をリセットするので、互いの準備を消し合う。
 
 これらは**世界を破壊する**（冒頭で `/reset` する）ので、ワークフロー実行中のスタックに対しては走らせない。
 

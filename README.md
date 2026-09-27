@@ -2,10 +2,15 @@
 
 ## Overview
 
-A virtual laboratory: five mock SiLA2 servers -- four instruments and a transporter -- plus a
-shared `laboratory_model` service that simulates the physical world they act on. It exists so
-a workflow execution system can be exercised against the same SiLA2 interface real instruments
-expose, before there are real instruments.
+A virtual laboratory: five mock instruments -- four instruments and a transporter -- served over
+**SiLA2** or **LADS OPC UA** (or both), plus a shared `laboratory_model` service that simulates
+the physical world they act on. It exists so a workflow execution system can be exercised
+against the interfaces real instruments expose, before there are real instruments.
+
+Each instrument's behaviour is written once (`instruments/`) and presented by both protocols, so
+the two cannot drift apart: what LADS changes is only how a thing is asked, never what happens.
+The LADS mapping, and the few differences the LADS conventions force, are in
+`docs/LADS_MAPPING.md`.
 
 The transporter, **Ardea**, mocks a machine that exists: it serves that machine's own nine
 Feature definitions unchanged, and implements the one command a workflow needs from a
@@ -13,26 +18,26 @@ transporter (`LabwareService.Transfer`). Like the machine, it is called with sta
 `Base1` and `Base2` are the two plain plate-holding stations, `Base3`-`Base6` the four
 instruments -- which its station map turns into places in this world. See `docs/SERVERS.md`.
 
-Docker Compose starts:
+Docker Compose serves (the protocol is chosen by profile, below):
 
-| Service | Instrument | Host port |
+| Instrument | SiLA2 (profile `sila2`) | LADS OPC UA (profile `lads`) |
 |---|---|---|
-| `laboratory-model` | shared world state | 8001 |
-| `sila2-server-1` | Microplate Centrifuge | 50052 |
-| `sila2-server-2` | PlateLoc | 50053 |
-| `sila2-server-3` | Automated Plate Seal Remover | 50054 |
-| `sila2-server-4` | Automated Thermal Cycler | 50055 |
-| `ardea-server-1` | Ardea (arm on a travel carriage) | 50057 |
+| shared world state | `laboratory-model` : 8001 (always) | same |
+| Microplate Centrifuge | `sila2-server-1` : 50052 | `lads-server-1` : 4841 |
+| PlateLoc | `sila2-server-2` : 50053 | `lads-server-2` : 4842 |
+| Automated Plate Seal Remover | `sila2-server-3` : 50054 | `lads-server-3` : 4843 |
+| Automated Thermal Cycler | `sila2-server-4` : 50055 | `lads-server-4` : 4844 |
+| Ardea (arm on a travel carriage) | `ardea-server-1` : 50057 | `ardea-lads-server-1` : 4847 |
 
 The station -- the workflow's entry and exit point -- has no server. It is two slots declared
 by the seed, and a rack has nothing commandable about it. 50056 is free because the server that
 used to sit there offered only `Reset` and a `Status` that never changed; Ardea keeps 50057 so
 anything already pointed at the lab's transporter still finds it.
 
-All SiLA2 servers start with `--insecure --verbose`.
+All servers start with `--insecure --verbose`.
 
 **The dependency runs one way.** This repository knows nothing about whoever drives it; a
-client depends only on "several ordinary SiLA2 services are running". `laboratory_model`
+client depends only on "several ordinary SiLA2 (or LADS OPC UA) services are running". `laboratory_model`
 stands in for the physical world, so **a workflow client must not talk to it** -- there is no
 such interface on a real bench. See `docs/RULES.md`.
 
@@ -40,12 +45,21 @@ such interface on a real bench. See `docs/RULES.md`.
 
 Prerequisites: Docker and Docker Compose.
 
+Choose the protocol with a profile; the laboratory model always starts:
+
 ```bash
-docker compose up -d
-docker compose down
-docker compose ps
-docker compose logs --tail=120
+docker compose --profile sila2 up -d                  # the SiLA2 lab
+docker compose --profile lads up -d                   # the LADS OPC UA lab
+docker compose --profile sila2 --profile lads up -d   # both, over one shared world
+docker compose --profile "*" down                     # stop everything, whichever was started
+docker compose --profile "*" ps
+docker compose --profile "*" logs --tail=120
 ```
+
+To make one the default, copy `.env.example` to `.env` (it sets `COMPOSE_PROFILES=sila2`); a
+plain `docker compose up -d` then starts the SiLA2 lab. `.env` is not tracked, so each checkout
+chooses for itself. **With no profile at all, only the laboratory model starts.** The commands
+below assume a profile has been chosen one of these ways.
 
 After changing source, build and recreate explicitly -- `up -d --build` does not reliably pick
 a change up:
@@ -117,9 +131,11 @@ uv run pytest
 ```
 
 They cover `laboratory_model` (world rules, HTTP contract, seeding), `laboratory-client` (HTTP
-transport and configuration) and `tools` (the duration slicer, plus a check that the duration
-files and the server implementations agree about which commands wait). Tests live next to the
-component they cover; dependencies and configuration are in the root `pyproject.toml`.
+transport and configuration), `instruments` (each instrument's behaviour, protocol aside), the
+LADS runtime and servers (a real OPC UA server and client, in process), and `tools` (the
+duration slicer, plus a check that the duration files and the instruments agree about which
+commands wait). Tests live next to the component they cover; dependencies and configuration are
+in the root `pyproject.toml`.
 
 ## Lint and type checking
 
@@ -137,17 +153,23 @@ These talk to a running stack over the network, so they check the deployment rat
 rules. Bring the stack up first. They exit non-zero on failure.
 
 ```bash
-uv run python samples/run_all_smoke_tests.py     # all five servers
-uv run python samples/laboratory_model_smoke.py  # the world model on its own
-uv run python samples/run_roundabout.py          # one plate around the whole lab
+uv run python samples/run_all_smoke_tests.py                 # all five SiLA2 servers
+uv run python samples/run_all_smoke_tests.py --protocol lads # all five LADS servers (or: both)
+uv run python samples/laboratory_model_smoke.py              # the world model on its own
+uv run python samples/run_roundabout.py                      # one plate around the whole lab, SiLA2
+uv run python samples/run_lads_roundabout.py                 # the same circuit over LADS
+uv run python samples/run_parity.py                          # both protocols must end the same way
 ```
 
 `run_roundabout.py` puts one item at `station.slot1` and moves it through
 `seal-remover.stage`, `plateloc.stage`, `thermal-cycler.block`, `centrifuge.deck` and back. Each
-leg is one `LabwareService.Transfer` on Ardea. The movement goes through the SiLA2 servers; the
-world model is used only to arrange the start and check the end.
+leg is one `LabwareService.Transfer` on Ardea. The movement goes through the servers; the world
+model is used only to arrange the start and check the end. `run_parity.py` runs that circuit over
+SiLA2 and then over LADS (both profiles up) and checks that the world, the instruments' readouts
+and the reasons given for the same mistakes all come out the same.
 
-Each sample wipes the world on entry, so do not run them against a stack that is mid-workflow.
+Each sample wipes the world on entry, so do not run them against a stack that is mid-workflow,
+and do not run two at once.
 
 ## Documentation
 
@@ -158,14 +180,16 @@ Each sample wipes the world on entry, so do not run them against a stack that is
 | `docs/LABORATORY_MODEL.md` | World model: state, API, seeding, lifecycle |
 | `docs/SERVERS.md` | Per-server implementation notes and the Status contract |
 | `docs/TIMING.md` | Command durations and the one-at-a-time guard |
+| `docs/LADS_MAPPING.md` | Where each SiLA2 command appears in LADS OPC UA, and the differences LADS forces |
 | `docs/OPERATIONS.md` | Runbook: start, verify, reset, switch profiles |
 
 ## Container networking
 
-From the host, reach each SiLA2 server on its published port (`50052`-`50055` and `50057`) and the
-laboratory model on `8001`. Between containers, use the service's container name with the
-*internal* port (`50052` for SiLA2 servers, `8001` for `laboratory-model`); the published ports
-`50053`-`50055` and `50057` are for host access and are not usable verbatim from inside another container.
+From the host, reach each SiLA2 server on its published port (`50052`-`50055` and `50057`), each
+LADS server on `opc.tcp://localhost:<port>/` (`4841`-`4844` and `4847`) and the laboratory model on
+`8001`. Between containers, use the service's container name with the *internal* port (`50052`
+for SiLA2 servers, `4840` for LADS servers, `8001` for `laboratory-model`); the published ports are
+for host access and are not usable verbatim from inside another container.
 
 ## License
 
