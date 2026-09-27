@@ -95,6 +95,16 @@ x-lads-thermal-cycler-server: &lads-thermal-cycler-server
     - laboratory-model
   command: ["python", "-m", "automated_thermal_cycler_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
+x-lads-ardea-server: &lads-ardea-server
+  build:
+    context: .
+    dockerfile: protocols/lads/servers/ardea_lads/Dockerfile
+    args:
+      DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
+  depends_on:
+    - laboratory-model
+  command: ["python", "-m", "ardea_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+
 services:
   laboratory-model:
     build:
@@ -259,3 +269,19 @@ services:
       - LADS_SERVER_NAME=ThermoFisher-Thermal-Cycler
       - LABORATORY_MODEL_URL=http://laboratory-model:8001
       - LABORATORY_MODEL_LOCATION=thermal-cycler.block
+
+  # The transporter over LADS. Host port 4847 mirrors the SiLA2 Ardea's 50057 (the slot after the
+  # four instruments is left free there too). The station map is the same as the SiLA2 Ardea's --
+  # both name the same bench -- and, like it, is read at startup (`--force-recreate` to change it).
+  ardea-lads-server-1:
+    <<: *lads-ardea-server
+    profiles: ["lads"]
+    ports:
+      - "4847:4840"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LADS_SERVER_TYPE=ArdeaLadsServer
+      - LADS_SERVER_NAME=Ardea
+      - LABORATORY_MODEL_URL=http://laboratory-model:8001
+      - LABORATORY_MODEL_LOCATION=ardea.gripper
+      - ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,Base4=plateloc.stage,Base5=centrifuge.deck,Base6=thermal-cycler.block

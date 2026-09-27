@@ -18,7 +18,7 @@
 | `protocols/sila2/servers/` | モック SiLA2 サーバー 5 台（Microplate Centrifuge / PlateLoc / Automated Plate Seal Remover / Automated Thermal Cycler の 4 装置＋搬送役 Ardea）。生成コードと、`instruments/` へ写すだけの薄い feature 実装（adapter）。**Ardea だけは実在する機器のモック**で、実機の Feature 定義 9 本をそのまま配信する（`docs/SERVERS.md`）。**station（ワークフローの入口・出口）にサーバーは無い** — ラックには commandable なものが無く、seed が spot を宣言すれば足りる |
 | `instruments/` | **プロトコル非依存の装置の振る舞い**（パッケージ `mock_instruments`）。状態・規則・所要時間・Status 遷移・世界への作用を 1 か所に持ち、SiLA2 版と LADS OPC UA 版（導入中）の両方がこれを呼ぶ（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」） |
 | `protocols/lads/lads_common/` | LADS OPC UA サーバーの共通部品（導入中）。LADS 1.0.0 と依存 NodeSet の同梱・型の実体化・状態機械・装置コマンドをスレッドで走らせる橋渡し・FunctionalUnit（Program と Result）・Function・StatusCode への対応づけ・サーバー起動。**FunctionalUnitState は独自の規則を持たず、装置の Status から導く** |
-| `protocols/lads/servers/` | LADS OPC UA サーバー 4 台（centrifuge / PlateLoc / seal remover / thermal cycler。Ardea は導入中）。各パッケージは装置のどのコマンドを LADS のどのノードとして見せるかだけを決める。compose では `lads` profile 付きの `lads-server-1..4`（ホスト 4841〜4844） |
+| `protocols/lads/servers/` | LADS OPC UA サーバー 5 台（centrifuge / PlateLoc / seal remover / thermal cycler / Ardea）。各パッケージは装置のどのコマンドを LADS のどのノードとして見せるかだけを決める。compose では `lads` profile 付きの `lads-server-1..4` と `ardea-lads-server-1`（ホスト 4841〜4844・4847） |
 | `laboratory_model/` | 共有の世界状態サービス |
 | `laboratory-client/` | サーバーが世界モデルに到達するための共有パッケージ（HTTP 転送層と環境変数からの設定読み取り）。**世界の意味づけは共有せず各サーバーに残す** |
 | `config/` | 世界のシードと、コマンド所要時間のプロファイル |

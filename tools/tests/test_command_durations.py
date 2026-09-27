@@ -59,6 +59,7 @@ MODULE_BY_SERVER = {
     "protocols/lads/servers/automated_thermal_cycler_lads": "thermal_cycler",
     "protocols/lads/servers/plateloc_lads": "plateloc",
     "protocols/lads/servers/automated_plate_seal_remover_lads": "seal_remover",
+    "protocols/lads/servers/ardea_lads": "ardea",
 }
 
 # Calls that make a command wait, each taking the command's name as a string literal: the wait

@@ -1,6 +1,6 @@
-"""In-process test of the four LADS instrument servers' real `build()` functions.
+"""In-process test of the five LADS servers' real `build()` functions.
 
-All four devices are built into one asyncua server -- loading the NodeSets is what costs time, and
+All five devices are built into one asyncua server -- loading the NodeSets is what costs time, and
 each server package only adds its own device -- and driven by a real client, with no world model
 wired up. The point is the mapping each package chose: the templates it publishes, which property
 names its programs take, where readouts appear, and that the instrument's rules come through
@@ -18,6 +18,7 @@ from typing import Any
 import pytest
 from asyncua import Client, Node, ua
 
+import ardea_lads.server as ardea
 import automated_plate_seal_remover_lads.server as seal_remover
 import automated_thermal_cycler_lads.server as thermal_cycler
 import microplate_centrifuge_lads.server as centrifuge
@@ -35,6 +36,8 @@ def no_world(monkeypatch: pytest.MonkeyPatch) -> None:
     # The instruments read their wiring from the environment; this test runs without a world.
     for variable in ("LABORATORY_MODEL_URL", "LABORATORY_MODEL_LOCATION", "COMMAND_DURATIONS_FILE"):
         monkeypatch.delenv(variable, raising=False)
+    # Ardea cannot start without its station map.
+    monkeypatch.setenv("ARDEA_STATIONS", "Base1=station.slot1,Base2=station.slot2,Base5=centrifuge.deck")
 
 
 def free_port() -> int:
@@ -175,12 +178,35 @@ async def check_thermal_cycler(unit: UnitClient) -> None:
     assert await unit.read("InstrumentState") == 0
 
 
-def test_the_four_instrument_servers() -> None:
+async def check_ardea(unit: UnitClient) -> None:
+    assert await unit.templates() == {"Transfer"}
+    assert await unit.read("StationNames") == ["Base1", "Base2", "Base5"]
+    assert await unit.read("FunctionSet.Carriage.SensorValue") == 0.0
+
+    # An unknown station fails the run after it has begun, as SiLA2's InvalidStation does; the
+    # transporter has no Status, so the unit is Stopped again rather than Aborted.
+    result = await unit.run_program("Transfer", SourceStation="Base1", DestinationStation="Base9")
+    assert result["Outcome"] == "Failed"
+    assert await unit.read("LastError") == (
+        "Transporter.Transfer: Base9: not a station of this machine. Known stations: Base1, Base2, Base5."
+    )
+    assert await unit.state() == "Stopped"
+
+    # With no world model wired up a transfer cannot happen, and the light cannot be read.
+    result = await unit.run_program("Transfer", SourceStation="Base1", DestinationStation="Base5")
+    assert result["Outcome"] == "Failed"
+    assert "requires LABORATORY_MODEL_URL" in await unit.read("LastError")
+    light = await unit.node("LightIsOn").read_data_value(raise_on_bad_status=False)
+    assert light.StatusCode.value == ua.StatusCodes.BadInvalidState
+
+
+def test_the_five_lads_servers() -> None:
     builds: list[Callable[[ServerContext], Awaitable[None]]] = [
         plateloc.build,
         seal_remover.build,
         centrifuge.build,
         thermal_cycler.build,
+        ardea.build,
     ]
 
     async def build_all(context: ServerContext) -> None:
@@ -201,6 +227,7 @@ def test_the_four_instrument_servers() -> None:
                     ("SealRemover.FunctionalUnitSet.Peeler", check_seal_remover),
                     ("Centrifuge.FunctionalUnitSet.Centrifuge", check_centrifuge),
                     ("ThermalCycler.FunctionalUnitSet.Cycler", check_thermal_cycler),
+                    ("Ardea.FunctionalUnitSet.Transporter", check_ardea),
                 ):
                     await check(UnitClient(client, vendor, lads, path))
         await context.bridge.close()

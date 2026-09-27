@@ -22,11 +22,13 @@ from __future__ import annotations
 import logging
 import sys
 from collections.abc import Callable
+from typing import Any
 
 from asyncua import Node, ua
 from asyncua.server.address_space import NodeData
 
 from mock_instruments.errors import InstrumentError
+from mock_instruments.runtime import Observable
 
 from .addressspace import LadsTypes, ModelBuilder
 from .functional_unit import FunctionalUnit, UnitCommand
@@ -331,7 +333,9 @@ class TimerControlFunction(_ControlFunction):
 
 class AnalogSensorFunction(_Function):
     """AnalogScalarSensorFunctionType: SensorValue (and RawValue, kept equal in the mock), read from
-    the instrument and republished after every program, stop and clear on the unit."""
+    the instrument and republished after every program, stop and clear on the unit -- and, if the
+    instrument publishes the value as an `Observable` (Ardea's carriage position, which moves in the
+    middle of a transfer), whenever it changes."""
 
     def __init__(self, unit: FunctionalUnit, node: Node) -> None:
         super().__init__(unit, node)
@@ -349,6 +353,7 @@ class AnalogSensorFunction(_Function):
         low: float,
         high: float,
         value: Getter,
+        observable: Observable[Any] | None = None,
     ) -> AnalogSensorFunction:
         function = cls(unit, await cls._create_node(unit, LadsTypes.ANALOG_SCALAR_SENSOR_FUNCTION, name))
         function._read = value
@@ -359,6 +364,8 @@ class AnalogSensorFunction(_Function):
             await _configure_analog_item(b, variable, engineering_units, low, high)
         await function.refresh()
         unit.add_refresher(function.refresh)
+        if observable is not None:
+            observable.subscribe(unit.bridge.listener(lambda _value: function.refresh()))
         await b.link_functional_groups(function.node)
         return function
 

@@ -270,6 +270,42 @@ class FunctionalUnit:
             observable.subscribe(self.bridge.listener(publish))
         return node
 
+    async def add_polled_readout(
+        self,
+        name: str,
+        read: Callable[[], object],
+        varianttype: ua.VariantType,
+        *,
+        initial: object,
+        interval_seconds: float = 0.5,
+    ) -> Node:
+        """Publish an instrument value that can change behind the server's back -- Ardea's light,
+        which lives in the world model and an operator may flip at any time -- as a vendor variable
+        re-read every `interval_seconds`.
+
+        `read` may block (it is an HTTP read), so it runs on a worker thread. A read that fails
+        leaves the variable with a Bad StatusCode chosen as for a failed method call, where a SiLA2
+        client would have got an error from the property getter. `initial` gives the variable its
+        type until the first read lands (asyncua refuses a scalar variable with no value)."""
+        node = await self.builder.add_vendor_variable(self.node, name, initial, varianttype)
+
+        async def poll_once() -> None:
+            try:
+                value = await self.bridge.call(read)
+            except Exception as error:
+                await node.write_value(ua.DataValue(StatusCode=ua.StatusCode(status_for(error))))
+                return
+            await node.write_value(ua.DataValue(ua.Variant(value, varianttype)))
+
+        async def poll_forever() -> None:
+            while True:
+                await poll_once()
+                await asyncio.sleep(interval_seconds)
+
+        await poll_once()
+        self.server_task(poll_forever(), name=f"{self.name}.{name}.poll")
+        return node
+
     def add_refresher(self, refresh: Callable[[], Awaitable[None]]) -> None:
         """Register a coroutine that republishes instrument values (a function's CurrentValue,
         ...). Every refresher runs after each program, stop and clear finishes."""
