@@ -10,7 +10,7 @@ ARG DURATIONS_FILE=command_durations.yaml
 RUN pip install --no-cache-dir pyyaml
 COPY config/ /tmp/config/
 COPY tools/slice_durations.py /tmp/slice_durations.py
-RUN python /tmp/slice_durations.py --device centrifuge --input "/tmp/config/${DURATIONS_FILE}" --output /tmp/command_durations.json
+RUN python /tmp/slice_durations.py --device seal-remover --input "/tmp/config/${DURATIONS_FILE}" --output /tmp/command_durations.json
 
 FROM python:3.14-slim
 
@@ -44,8 +44,8 @@ COPY instruments/ /tmp/instruments/
 RUN pip install --no-cache-dir /tmp/instruments && rm -rf /tmp/instruments
 
 # This server's own package.
-COPY protocols/sila2/servers/microplate_centrifuge_server/ /tmp/microplate_centrifuge_server/
-RUN pip install --no-cache-dir /tmp/microplate_centrifuge_server && rm -rf /tmp/microplate_centrifuge_server
+COPY protocols/sila2/servers/automated_plate_seal_remover_sila2/ /tmp/automated_plate_seal_remover_sila2/
+RUN pip install --no-cache-dir /tmp/automated_plate_seal_remover_sila2 && rm -rf /tmp/automated_plate_seal_remover_sila2
 
 # This server's command durations, sliced out of the lab-wide file above.
 COPY --from=durations /tmp/command_durations.json /app/command_durations.json
@@ -53,4 +53,4 @@ COPY --from=durations /tmp/command_durations.json /app/command_durations.json
 EXPOSE 50052
 
 # Start the SiLA2 server without TLS for local use; override in compose if needed
-CMD ["python", "-m", "microplate_centrifuge_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure"]
+CMD ["python", "-m", "automated_plate_seal_remover_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure"]

@@ -134,7 +134,7 @@
 - **テストは対象コードの隣に置く**（`laboratory_model/tests/`、`laboratory-client/tests/`、`instruments/tests/`、`tools/tests/`、
   `protocols/sila2/servers/<name>/tests/`）。**依存とテスト設定はルートの `pyproject.toml` に集約する**。
   1 コンポーネントごとに `testpaths` に 1 エントリ足し、**そのテストが対象を import する場合だけ**
-  `pythonpath` にも足す（`protocols/sila2/servers/ardea_server/tests/` はファイルを読むだけなので `testpaths` のみ）。
+  `pythonpath` にも足す（`protocols/sila2/servers/ardea_mock_sila2/tests/` はファイルを読むだけなので `testpaths` のみ）。
 - `--import-mode=importlib` を使う。同名のテストファイルが複数コンポーネントに現れても衝突しないため。
   **副作用として、リポジトリ直下の project ディレクトリ名を、その中のパッケージ名と同じにしてはならない**。
   pytest は rootdir からの相対パスでテストモジュール名を決めるので、`foo/tests/` は `foo.tests.<module>` として

@@ -25,11 +25,11 @@ from pathlib import Path
 # smoke test is run on its own.
 SCRIPTS = {
     "sila2": [
-        "microplate_centrifuge_server_smoke.py",
-        "plateloc_server_smoke.py",
-        "automated_plate_seal_remover_server_smoke.py",
-        "automated_thermal_cycler_server_smoke.py",
-        "ardea_server_smoke.py",
+        "sila2_centrifuge_smoke.py",
+        "sila2_plateloc_smoke.py",
+        "sila2_seal_remover_smoke.py",
+        "sila2_thermal_cycler_smoke.py",
+        "sila2_ardea_smoke.py",
     ],
     # The same five servers' LADS OPC UA counterparts (the `lads` compose profile).
     "lads": [

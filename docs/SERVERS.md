@@ -10,9 +10,14 @@
 
 ## Ardea サーバー（実在機器のモック）
 
-`protocols/sila2/servers/ardea_server/` は**実在する機器 Ardea のモック**であり、他の 4 台とは性格が違う。実機の
+`protocols/sila2/servers/ardea_mock_sila2/` は**実在する機器 Ardea のモック**であり、他の 4 台とは性格が違う。実機の
 `ardea-sila2` は DENSO ロボット（ORiN b-CAP）と KEYENCE PLC（KV COM+）を同時に駆動し、
 **Feature を 9 本公開する**。モックもその 9 本を配信する。
+
+**パッケージ名だけ他の 4 台の `<装置>_sila2` と揃えず `ardea_mock_sila2` にしている。** 実機のパッケージ名が
+`ardea_sila2`（distribution `ardea-sila2`）なので、揃えるとモックと実機が同じ import 名になり、両方を同じ環境に
+入れて突き合わせるとき（下記「Feature 定義の 2 つのコピー」、`docs/OPERATIONS.md`）やログのロガー名で取り違える。
+Feature 定義のソース置き場 `protocols/sila2/specs/ardea_server/` は改名していない（他の装置の specs も同様）。
 
 | Feature | 出自 | モックの実装 |
 |---|---|---|
@@ -24,9 +29,9 @@
 | `DeviceService` / `ConnectionService` | `kvcomplus-sila2`（KV COM+ プロバイダ） | 全コマンド未実装 |
 
 **Feature 定義の 2 つのコピー。** `protocols/sila2/specs/ardea_server/` にあるのは**ソース** XML（実機リポジトリからの
-コピー・読むためのもの）。実際に配信されるのは `protocols/sila2/servers/ardea_server/ardea_server/generated/<feature>/`
+コピー・読むためのもの）。実際に配信されるのは `protocols/sila2/servers/ardea_mock_sila2/ardea_mock_sila2/generated/<feature>/`
 にある codegen 正規化版で、これも実機の生成物からコピーしたものなので**実機が配信するバイト列と同一**である。
-両者が同じ Feature を表しているかは `protocols/sila2/servers/ardea_server/tests/test_feature_definitions.py` が検査する。
+両者が同じ Feature を表しているかは `protocols/sila2/servers/ardea_mock_sila2/tests/test_feature_definitions.py` が検査する。
 **生成コードは再生成せずコピーする**（それが同一性を構造的に保証する唯一の方法）。出典と手順は
 `protocols/sila2/specs/ardea_server/README.md`。
 
@@ -149,6 +154,6 @@ ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,
   `seal-remover.stage -> plateloc.stage -> thermal-cycler.block -> centrifuge.deck -> station.slot1` と一周させる。
   1 区間 = `Transfer` 1 回。初期化と最終確認には世界モデルを使うが、装置間の移動そのものは SiLA2 サーバーを
   直接呼び出して行う。
-- `samples/ardea_server_smoke.py` は Transfer に加えて**未実装コマンドが即座に拒否されること**も確認する
+- `samples/sila2_ardea_smoke.py` は Transfer に加えて**未実装コマンドが即座に拒否されること**も確認する
   （`MoveCarriage`）。無応答で待たされるのではなくエラーで返るのが仕様である。
 - 手順は `docs/OPERATIONS.md`。

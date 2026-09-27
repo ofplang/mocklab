@@ -195,6 +195,6 @@ for host access and are not usable verbatim from inside another container.
 
 MIT ([LICENSE](LICENSE)), with one carve-out stated there: the SiLA Feature definitions under
 `protocols/sila2/specs/ardea_server/` and the generated code under
-`protocols/sila2/servers/ardea_server/ardea_server/generated/` are verbatim copies from the real machine's
+`protocols/sila2/servers/ardea_mock_sila2/ardea_mock_sila2/generated/` are verbatim copies from the real machine's
 servers, so they carry those projects' terms rather than this repository's.
 `protocols/sila2/specs/ardea_server/README.md` records where each file came from.

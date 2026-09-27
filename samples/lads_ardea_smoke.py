@@ -1,6 +1,6 @@
 """Smoke test for Ardea, the transporter, over LADS OPC UA.
 
-The LADS counterpart of `ardea_server_smoke.py`: the station names and the machine light are vendor
+The LADS counterpart of `sila2_ardea_smoke.py`: the station names and the machine light are vendor
 variables, the carriage position a sensor function, and a transfer the Transfer program -- whose
 seven phases show as ActiveProgram.CurrentStepName while it runs, and whose responses land in the
 Result. A transfer naming a station the machine does not have fails after it has begun, as SiLA2's

@@ -50,11 +50,11 @@ DEVICE_BY_MODULE = {
 # instrument is, or the server would be timed as something else; `test_each_server_image_slices_
 # its_own_device` holds the two together.
 MODULE_BY_SERVER = {
-    "protocols/sila2/servers/microplate_centrifuge_server": "centrifuge",
-    "protocols/sila2/servers/automated_thermal_cycler_server": "thermal_cycler",
-    "protocols/sila2/servers/plateloc_server": "plateloc",
-    "protocols/sila2/servers/automated_plate_seal_remover_server": "seal_remover",
-    "protocols/sila2/servers/ardea_server": "ardea",
+    "protocols/sila2/servers/microplate_centrifuge_sila2": "centrifuge",
+    "protocols/sila2/servers/automated_thermal_cycler_sila2": "thermal_cycler",
+    "protocols/sila2/servers/plateloc_sila2": "plateloc",
+    "protocols/sila2/servers/automated_plate_seal_remover_sila2": "seal_remover",
+    "protocols/sila2/servers/ardea_mock_sila2": "ardea",
     "protocols/lads/servers/microplate_centrifuge_lads": "centrifuge",
     "protocols/lads/servers/automated_thermal_cycler_lads": "thermal_cycler",
     "protocols/lads/servers/plateloc_lads": "plateloc",

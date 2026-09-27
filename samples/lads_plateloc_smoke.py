@@ -1,6 +1,6 @@
 """Smoke test for the PlateLoc (plate sealer) LADS OPC UA server.
 
-The LADS counterpart of `plateloc_server_smoke.py`, against the same instrument behaviour: the
+The LADS counterpart of `sila2_plateloc_smoke.py`, against the same instrument behaviour: the
 sealing set-points are written as the SealingTemperature / SealingTime functions' TargetValue, a
 seal is the StartCycle program, and the cycle count is a vendor readout. It also checks the one
 world rule the sealer has -- no plate, no cycle -- which LADS reports as BadInvalidState with the

@@ -1,5 +1,5 @@
 [project]
-name = "ardea-server"
+name = "automated_plate_seal_remover_sila2"
 version = "0.0.0"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,10 +19,10 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["ardea_server*"]
+include = ["automated_plate_seal_remover_sila2*"]
 
 [tool.setuptools.package-data]
-"ardea_server.generated" = [
+"automated_plate_seal_remover_sila2.generated" = [
     "*/*.sila.xml",
     "*/*.proto",
 ]

@@ -13,52 +13,52 @@
 x-ardea-server: &ardea-server
   build:
     context: .
-    dockerfile: protocols/sila2/servers/ardea_server/Dockerfile
+    dockerfile: protocols/sila2/servers/ardea_mock_sila2/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "ardea_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
+  command: ["python", "-m", "ardea_mock_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
 x-microplate-centrifuge-server: &microplate-centrifuge-server
   build:
     context: .
-    dockerfile: protocols/sila2/servers/microplate_centrifuge_server/Dockerfile
+    dockerfile: protocols/sila2/servers/microplate_centrifuge_sila2/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "microplate_centrifuge_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
+  command: ["python", "-m", "microplate_centrifuge_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
 x-plateloc-server: &plateloc-server
   build:
     context: .
-    dockerfile: protocols/sila2/servers/plateloc_server/Dockerfile
+    dockerfile: protocols/sila2/servers/plateloc_sila2/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "plateloc_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
+  command: ["python", "-m", "plateloc_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
 x-plate-seal-remover-server: &plate-seal-remover-server
   build:
     context: .
-    dockerfile: protocols/sila2/servers/automated_plate_seal_remover_server/Dockerfile
+    dockerfile: protocols/sila2/servers/automated_plate_seal_remover_sila2/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "automated_plate_seal_remover_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
+  command: ["python", "-m", "automated_plate_seal_remover_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
 x-thermal-cycler-server: &thermal-cycler-server
   build:
     context: .
-    dockerfile: protocols/sila2/servers/automated_thermal_cycler_server/Dockerfile
+    dockerfile: protocols/sila2/servers/automated_thermal_cycler_sila2/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "automated_thermal_cycler_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
+  command: ["python", "-m", "automated_thermal_cycler_sila2", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
 # The LADS OPC UA servers of the same instruments (the `lads` profile, below). Same build context
 # and duration profile as the SiLA2 anchors above; OPC UA's registered port 4840 inside.

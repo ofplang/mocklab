@@ -40,7 +40,7 @@ dev = [
 # component whose tests import it contributes one entry here and one to `pythonpath`, which is
 # what makes `import app...` or `import mock_instruments...` resolve without installing anything.
 # The instrument behaviour in `instruments/` imports nothing from sila2 or asyncua, so its tests
-# need neither a container nor a protocol library. `protocols/sila2/servers/ardea_server/tests/` only reads
+# need neither a container nor a protocol library. `protocols/sila2/servers/ardea_mock_sila2/tests/` only reads
 # files (the feature definitions), so it needs no path entry at all.
 #
 # A server directory shares a name with the package inside it, which the note below warns
@@ -56,7 +56,7 @@ dev = [
 # after the distribution (`laboratory-client`) makes that collision impossible, since a
 # hyphen cannot appear in a module name. `laboratory_model/` avoids the same trap by holding
 # a package called `app`, and `instruments/` by holding one called `mock_instruments`.
-testpaths = ["laboratory_model/tests", "laboratory-client/tests", "instruments/tests", "tools/tests", "protocols/sila2/servers/ardea_server/tests", "protocols/lads/lads_common/tests", "protocols/lads/servers/tests"]
+testpaths = ["laboratory_model/tests", "laboratory-client/tests", "instruments/tests", "tools/tests", "protocols/sila2/servers/ardea_mock_sila2/tests", "protocols/lads/lads_common/tests", "protocols/lads/servers/tests"]
 pythonpath = [
     "laboratory_model",
     "laboratory-client",

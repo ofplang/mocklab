@@ -1,6 +1,6 @@
 """Smoke test for the automated thermal cycler LADS OPC UA server.
 
-The LADS counterpart of `automated_thermal_cycler_server_smoke.py`: Load, Validate and StartRun
+The LADS counterpart of `sila2_thermal_cycler_smoke.py`: Load, Validate and StartRun
 are three programs in the order the instrument enforces; the run keeps the unit Running until
 Stop (StopRun); the lid is a cover function that locks and unlocks the block in the world model.
 Breaking the order faults the cycler exactly as over SiLA2, and Clear recovers it.

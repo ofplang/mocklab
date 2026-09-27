@@ -162,13 +162,13 @@ uv run pytest
 | `protocols/lads/lads_common/tests/` | LADS 共通部品。スレッドと asyncio の橋渡し、および**実際の asyncua サーバーとクライアントを同一プロセスで立てて**、Program・FunctionalUnitState・StatusCode・TargetValue 書き込みの対応を確認する（NodeSet の読み込みで 1 サーバー約 6 秒かかるため、スイート全体の所要時間の大半はここ） |
 | `protocols/lads/servers/tests/` | LADS 版 5 台（4 装置と Ardea）の実際の `build()` を 1 つの asyncua サーバーに載せ、公開する Program・property 名・Function・vendor 変数と、装置の規則（範囲・順序・thermal cycler の Stop まで Running・Ardea の未知 station）を確認する |
 | `tools/tests/` | 所要時間の切り出し、**設定ファイルと装置実装の齟齬検出**、各サーバーの Dockerfile が自分の device を切り出しているか |
-| `protocols/sila2/servers/ardea_server/tests/` | `protocols/sila2/specs/` の Feature 定義と**実際に配信される定義**の整合 |
+| `protocols/sila2/servers/ardea_mock_sila2/tests/` | `protocols/sila2/specs/` の Feature 定義と**実際に配信される定義**の整合 |
 
 in-process で動くので compose スタックの起動は不要。方針は `docs/RULES.md`「テスト方針」。
 
 サーバー側のテストを追加する場合も同じ方針で `protocols/sila2/servers/<name>/tests/` に置き、ルート
 `[tool.pytest.ini_options]` の `testpaths` に 1 行追加する（**そのテストが対象を import する場合だけ**
-`pythonpath` にも足す）。現在は `protocols/sila2/servers/ardea_server/tests/` があり、Feature 定義をファイルとして
+`pythonpath` にも足す）。現在は `protocols/sila2/servers/ardea_mock_sila2/tests/` があり、Feature 定義をファイルとして
 読むだけなので `testpaths` のみである。
 
 ## 静的チェック
@@ -237,7 +237,7 @@ cd ../ardea-sila2
 git submodule update --init --recursive     # 初回のみ
 sha256sum ardea_sila2/generated/*/*.sila.xml third_party/*/*/generated/*/*.sila.xml
 cd -
-sha256sum protocols/sila2/servers/ardea_server/ardea_server/generated/*/*.sila.xml
+sha256sum protocols/sila2/servers/ardea_mock_sila2/ardea_mock_sila2/generated/*/*.sila.xml
 ```
 
 9 本のハッシュが一致していればよい。差分があれば**ソース XML（`protocols/sila2/specs/ardea_server/`）と生成物の両方を

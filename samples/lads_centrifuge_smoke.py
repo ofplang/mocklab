@@ -1,6 +1,6 @@
 """Smoke test for the microplate centrifuge LADS OPC UA server.
 
-The LADS counterpart of `microplate_centrifuge_server_smoke.py`: the door is a cover function
+The LADS counterpart of `sila2_centrifuge_smoke.py`: the door is a cover function
 whose Close and Open lock and unlock the centrifuge's deck in the world model, and SpinCycle,
 LoadPlate, UnloadPlate, Home and Park are programs taking the SiLA2 parameters as properties.
 

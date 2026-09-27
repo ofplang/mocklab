@@ -1,6 +1,6 @@
 """Smoke test for the automated plate seal remover (peeler) LADS OPC UA server.
 
-The LADS counterpart of `automated_plate_seal_remover_server_smoke.py`: Peel is a program whose
+The LADS counterpart of `sila2_seal_remover_smoke.py`: Peel is a program whose
 two parameters are properties and whose warning lands in the Result; the tape reserves that SiLA2
 reads with GetTapeLeft are two sensor functions here.
 

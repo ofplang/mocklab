@@ -7,7 +7,7 @@ they have different jobs:
 
 * `protocols/sila2/specs/ardea_server/<Feature>.sila.xml` -- the source file, copied from `ardea-sila2`. It is
   documentation of what was agreed; nothing reads it at run time.
-* `protocols/sila2/servers/ardea_server/ardea_server/generated/<feature>/<Feature>.sila.xml` -- the sila2 code
+* `protocols/sila2/servers/ardea_mock_sila2/ardea_mock_sila2/generated/<feature>/<Feature>.sila.xml` -- the sila2 code
   generator's normalisation of that same file, copied from the real server's generated tree.
   **This** is what the server serves and what a client receives.
 
@@ -34,8 +34,8 @@ import pytest
 
 REPOSITORY_ROOT = pathlib.Path(__file__).resolve().parents[5]
 SPECS_DIRECTORY = REPOSITORY_ROOT / "protocols" / "sila2" / "specs" / "ardea_server"
-SERVER_DIRECTORY = REPOSITORY_ROOT / "protocols" / "sila2" / "servers" / "ardea_server"
-GENERATED_DIRECTORY = SERVER_DIRECTORY / "ardea_server" / "generated"
+SERVER_DIRECTORY = REPOSITORY_ROOT / "protocols" / "sila2" / "servers" / "ardea_mock_sila2"
+GENERATED_DIRECTORY = SERVER_DIRECTORY / "ardea_mock_sila2" / "generated"
 
 # The nine features the real Ardea server exposes: its own four, the b-CAP provider's three and
 # the KV COM+ provider's two. Written out rather than globbed, so a missing file fails the test
@@ -142,8 +142,8 @@ def test_transfer_is_the_command_the_mock_implements() -> None:
         / "protocols"
         / "sila2"
         / "servers"
-        / "ardea_server"
-        / "ardea_server"
+        / "ardea_mock_sila2"
+        / "ardea_mock_sila2"
         / "feature_implementations"
         / "labwareservice_impl.py"
     ).read_text(encoding="utf-8")
