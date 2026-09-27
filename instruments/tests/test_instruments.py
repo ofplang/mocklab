@@ -122,6 +122,11 @@ def test_stop_commands_are_not_guarded() -> None:
         instrument.stop_run()
 
 
+def test_a_configured_duration_can_be_read_before_waiting_it() -> None:
+    durations = CommandDurations({"Peel": 8.0})
+    assert (durations.duration_of("Peel"), durations.duration_of("Reset")) == (8.0, 0.0)
+
+
 def test_an_instrument_comes_up_idle() -> None:
     instrument = seal_remover.SealRemover(laboratory_model=UNCONFIGURED, durations=CommandDurations())
     seen: list[Status] = []

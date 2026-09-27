@@ -1,0 +1,23 @@
+[project]
+name = "lads-common"
+version = "0.0.0"
+description = "Shared runtime for the LADS OPC UA servers of the mock lab"
+requires-python = ">=3.12"
+dependencies = [
+    # Pinned to the 2.0 line: addressspace.py uses the internal
+    # asyncua.common.instantiate_util._read_and_copy_attrs helper.
+    "asyncua>=2.0.1,<2.1",
+    # The instrument behaviour every LADS server presents, installed from ./instruments by each
+    # server's Dockerfile ahead of this package (so pip never looks for it online).
+    "mock-instruments",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["lads_common*"]
+
+[tool.setuptools.package-data]
+"lads_common" = ["py.typed", "nodesets/*.xml", "nodesets/README.md"]

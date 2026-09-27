@@ -67,6 +67,11 @@ class CommandDurations:
     def from_environment(cls) -> CommandDurations:
         return cls(load_command_durations())
 
+    def duration_of(self, command_name: str) -> float:
+        """The configured duration of `command_name` in seconds, 0 if none is configured. For a
+        protocol that publishes an estimate before the command runs (LADS EstimatedRuntime)."""
+        return self._durations.get(command_name, 0.0)
+
     def sleep_for(self, command_name: str, *, fraction: float = 1.0) -> None:
         """Wait (part of) the nominal time `command_name` takes.
 
