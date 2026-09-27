@@ -55,11 +55,11 @@ MODULE_BY_SERVER = {
     "protocols/sila2/servers/plateloc_mock_sila2": "plateloc",
     "protocols/sila2/servers/automated_plate_seal_remover_mock_sila2": "seal_remover",
     "protocols/sila2/servers/ardea_mock_sila2": "ardea",
-    "protocols/lads/servers/microplate_centrifuge_lads": "centrifuge",
-    "protocols/lads/servers/automated_thermal_cycler_lads": "thermal_cycler",
-    "protocols/lads/servers/plateloc_lads": "plateloc",
-    "protocols/lads/servers/automated_plate_seal_remover_lads": "seal_remover",
-    "protocols/lads/servers/ardea_lads": "ardea",
+    "protocols/lads/servers/microplate_centrifuge_mock_lads": "centrifuge",
+    "protocols/lads/servers/automated_thermal_cycler_mock_lads": "thermal_cycler",
+    "protocols/lads/servers/plateloc_mock_lads": "plateloc",
+    "protocols/lads/servers/automated_plate_seal_remover_mock_lads": "seal_remover",
+    "protocols/lads/servers/ardea_mock_lads": "ardea",
 }
 
 # Calls that make a command wait, each taking the command's name as a string literal: the wait

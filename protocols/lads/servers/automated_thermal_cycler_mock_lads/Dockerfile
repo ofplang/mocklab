@@ -32,12 +32,12 @@ COPY instruments/ /tmp/instruments/
 RUN pip install --no-cache-dir /tmp/instruments && rm -rf /tmp/instruments
 COPY protocols/lads/lads_common/ /tmp/lads_common/
 RUN pip install --no-cache-dir /tmp/lads_common && rm -rf /tmp/lads_common
-COPY protocols/lads/servers/automated_thermal_cycler_lads/ /tmp/automated_thermal_cycler_lads/
-RUN pip install --no-cache-dir /tmp/automated_thermal_cycler_lads && rm -rf /tmp/automated_thermal_cycler_lads
+COPY protocols/lads/servers/automated_thermal_cycler_mock_lads/ /tmp/automated_thermal_cycler_mock_lads/
+RUN pip install --no-cache-dir /tmp/automated_thermal_cycler_mock_lads && rm -rf /tmp/automated_thermal_cycler_mock_lads
 
 # This server's command durations, sliced out of the lab-wide file above.
 COPY --from=durations /tmp/command_durations.json /app/command_durations.json
 
 EXPOSE 4840
 
-CMD ["python", "-m", "automated_thermal_cycler_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure"]
+CMD ["python", "-m", "automated_thermal_cycler_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure"]

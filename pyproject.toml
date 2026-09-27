@@ -62,11 +62,11 @@ pythonpath = [
     "laboratory-client",
     "instruments",
     "protocols/lads/lads_common",
-    "protocols/lads/servers/microplate_centrifuge_lads",
-    "protocols/lads/servers/automated_thermal_cycler_lads",
-    "protocols/lads/servers/plateloc_lads",
-    "protocols/lads/servers/automated_plate_seal_remover_lads",
-    "protocols/lads/servers/ardea_lads",
+    "protocols/lads/servers/microplate_centrifuge_mock_lads",
+    "protocols/lads/servers/automated_thermal_cycler_mock_lads",
+    "protocols/lads/servers/plateloc_mock_lads",
+    "protocols/lads/servers/automated_plate_seal_remover_mock_lads",
+    "protocols/lads/servers/ardea_mock_lads",
     "tools",
 ]
 # -ra summarises non-passing outcomes. --import-mode=importlib keeps test modules from
@@ -95,21 +95,21 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "W"]
 # None of these is installed into the dev environment, so ruff would otherwise file them
 # under third-party: `app` is the laboratory model's own package, `laboratory_client` the
 # shared HTTP client, `mock_instruments` the protocol-independent instrument behaviour the servers expose,
-# `lads_common` and the `*_lads` packages the LADS OPC UA runtime and servers,
+# `lads_common` and the `*_mock_lads` packages the LADS OPC UA runtime and servers,
 # and `common` / `lads_client` the helper modules the sample scripts share. Declaring them keeps our imports in
 # their own block.
 known-first-party = [
     "app",
-    "ardea_lads",
-    "automated_plate_seal_remover_lads",
-    "automated_thermal_cycler_lads",
+    "ardea_mock_lads",
+    "automated_plate_seal_remover_mock_lads",
+    "automated_thermal_cycler_mock_lads",
     "common",
     "laboratory_client",
     "lads_client",
     "lads_common",
-    "microplate_centrifuge_lads",
+    "microplate_centrifuge_mock_lads",
     "mock_instruments",
-    "plateloc_lads",
+    "plateloc_mock_lads",
     "run_lads_roundabout",
     "run_roundabout",
     "slice_durations",
@@ -129,11 +129,11 @@ mypy_path = [
     "laboratory_model",
     "instruments",
     "protocols/lads/lads_common",
-    "protocols/lads/servers/microplate_centrifuge_lads",
-    "protocols/lads/servers/automated_thermal_cycler_lads",
-    "protocols/lads/servers/plateloc_lads",
-    "protocols/lads/servers/automated_plate_seal_remover_lads",
-    "protocols/lads/servers/ardea_lads",
+    "protocols/lads/servers/microplate_centrifuge_mock_lads",
+    "protocols/lads/servers/automated_thermal_cycler_mock_lads",
+    "protocols/lads/servers/plateloc_mock_lads",
+    "protocols/lads/servers/automated_plate_seal_remover_mock_lads",
+    "protocols/lads/servers/ardea_mock_lads",
     "tools",
 ]
 # sila2, typer and uvicorn ship no stubs we depend on.

@@ -1,4 +1,4 @@
-# Entry point: `python -m plateloc_lads --insecure`. Everything else is in lads_common.server.
+# Entry point: `python -m plateloc_mock_lads --insecure`. Everything else is in lads_common.server.
 from lads_common import run
 
 from .server import SPEC, build

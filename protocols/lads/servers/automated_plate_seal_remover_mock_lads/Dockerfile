@@ -6,7 +6,7 @@ ARG DURATIONS_FILE=command_durations.yaml
 RUN pip install --no-cache-dir pyyaml
 COPY config/ /tmp/config/
 COPY tools/slice_durations.py /tmp/slice_durations.py
-RUN python /tmp/slice_durations.py --device centrifuge --input "/tmp/config/${DURATIONS_FILE}" --output /tmp/command_durations.json
+RUN python /tmp/slice_durations.py --device seal-remover --input "/tmp/config/${DURATIONS_FILE}" --output /tmp/command_durations.json
 
 FROM python:3.14-slim
 
@@ -32,12 +32,12 @@ COPY instruments/ /tmp/instruments/
 RUN pip install --no-cache-dir /tmp/instruments && rm -rf /tmp/instruments
 COPY protocols/lads/lads_common/ /tmp/lads_common/
 RUN pip install --no-cache-dir /tmp/lads_common && rm -rf /tmp/lads_common
-COPY protocols/lads/servers/microplate_centrifuge_lads/ /tmp/microplate_centrifuge_lads/
-RUN pip install --no-cache-dir /tmp/microplate_centrifuge_lads && rm -rf /tmp/microplate_centrifuge_lads
+COPY protocols/lads/servers/automated_plate_seal_remover_mock_lads/ /tmp/automated_plate_seal_remover_mock_lads/
+RUN pip install --no-cache-dir /tmp/automated_plate_seal_remover_mock_lads && rm -rf /tmp/automated_plate_seal_remover_mock_lads
 
 # This server's command durations, sliced out of the lab-wide file above.
 COPY --from=durations /tmp/command_durations.json /app/command_durations.json
 
 EXPOSE 4840
 
-CMD ["python", "-m", "microplate_centrifuge_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure"]
+CMD ["python", "-m", "automated_plate_seal_remover_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure"]

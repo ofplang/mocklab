@@ -18,7 +18,7 @@
 `mock` を入れているのは実機のサーバーと取り違えないためで、きっかけは Ardea だった: 実機のパッケージ名が
 `ardea_sila2`（distribution `ardea-sila2`）なので、`<装置>_sila2` ではモックと実機が同じ import 名になり、両方を
 同じ環境に入れて突き合わせるとき（下記「Feature 定義の 2 つのコピー」、`docs/OPERATIONS.md`）やログのロガー名で
-取り違える。他の 4 台も同じ規則に揃えてある。改名したのはパッケージ（とそのディレクトリ）だけで、Feature 名・
+取り違える。他の 4 台も同じ規則に揃えてあり、LADS OPC UA 版も `<装置>_mock_lads` とする。改名したのはパッケージ（とそのディレクトリ）だけで、Feature 名・
 コマンド名・サーバーの型名（`SILA_SERVER_TYPE`）・Feature 定義のソース置き場 `protocols/sila2/specs/<装置>_server/`
 は変えていない。
 

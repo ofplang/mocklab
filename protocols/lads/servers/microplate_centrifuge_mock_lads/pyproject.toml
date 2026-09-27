@@ -1,5 +1,5 @@
 [project]
-name = "automated_thermal_cycler_lads"
+name = "microplate_centrifuge_mock_lads"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -13,4 +13,4 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["automated_thermal_cycler_lads*"]
+include = ["microplate_centrifuge_mock_lads*"]

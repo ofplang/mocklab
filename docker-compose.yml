@@ -65,52 +65,52 @@ x-thermal-cycler-server: &thermal-cycler-server
 x-lads-microplate-centrifuge-server: &lads-microplate-centrifuge-server
   build:
     context: .
-    dockerfile: protocols/lads/servers/microplate_centrifuge_lads/Dockerfile
+    dockerfile: protocols/lads/servers/microplate_centrifuge_mock_lads/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "microplate_centrifuge_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+  command: ["python", "-m", "microplate_centrifuge_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
 x-lads-plateloc-server: &lads-plateloc-server
   build:
     context: .
-    dockerfile: protocols/lads/servers/plateloc_lads/Dockerfile
+    dockerfile: protocols/lads/servers/plateloc_mock_lads/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "plateloc_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+  command: ["python", "-m", "plateloc_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
 x-lads-plate-seal-remover-server: &lads-plate-seal-remover-server
   build:
     context: .
-    dockerfile: protocols/lads/servers/automated_plate_seal_remover_lads/Dockerfile
+    dockerfile: protocols/lads/servers/automated_plate_seal_remover_mock_lads/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "automated_plate_seal_remover_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+  command: ["python", "-m", "automated_plate_seal_remover_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
 x-lads-thermal-cycler-server: &lads-thermal-cycler-server
   build:
     context: .
-    dockerfile: protocols/lads/servers/automated_thermal_cycler_lads/Dockerfile
+    dockerfile: protocols/lads/servers/automated_thermal_cycler_mock_lads/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "automated_thermal_cycler_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+  command: ["python", "-m", "automated_thermal_cycler_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
 x-lads-ardea-server: &lads-ardea-server
   build:
     context: .
-    dockerfile: protocols/lads/servers/ardea_lads/Dockerfile
+    dockerfile: protocols/lads/servers/ardea_mock_lads/Dockerfile
     args:
       DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
   depends_on:
     - laboratory-model
-  command: ["python", "-m", "ardea_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+  command: ["python", "-m", "ardea_mock_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
 
 services:
   laboratory-model:

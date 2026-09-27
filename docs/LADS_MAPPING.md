@@ -164,7 +164,7 @@ LADS の規約・推奨に合わせたために SiLA2 版と挙動が異なる�
 | 対象 | 場所 |
 |---|---|
 | LADS 共通部品（NodeSet の同梱・状態機械・Program・Function・StatusCode 対応・サーバー起動） | `protocols/lads/lads_common/` |
-| 各サーバー（どのコマンドをどのノードにするかだけを決める） | `protocols/lads/servers/<装置>_lads/` |
+| 各サーバー（どのコマンドをどのノードにするかだけを決める） | `protocols/lads/servers/<装置>_mock_lads/` |
 | 同梱 NodeSet（DI 1.04.0 / AMB 1.01.0 / Machinery 1.03.0 / LADS 1.0.0、原本のまま） | `protocols/lads/lads_common/lads_common/nodesets/` |
 | smoke テストと roundabout、LADS クライアントの最小実装 | `samples/lads_*.py`、`samples/run_lads_roundabout.py`、`samples/lads_client.py` |
 | SiLA2 版と LADS 版の挙動一致の検査 | `samples/run_parity.py` |

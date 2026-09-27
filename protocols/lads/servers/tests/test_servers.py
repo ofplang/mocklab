@@ -18,11 +18,11 @@ from typing import Any
 import pytest
 from asyncua import Client, Node, ua
 
-import ardea_lads.server as ardea
-import automated_plate_seal_remover_lads.server as seal_remover
-import automated_thermal_cycler_lads.server as thermal_cycler
-import microplate_centrifuge_lads.server as centrifuge
-import plateloc_lads.server as plateloc
+import ardea_mock_lads.server as ardea
+import automated_plate_seal_remover_mock_lads.server as seal_remover
+import automated_thermal_cycler_mock_lads.server as thermal_cycler
+import microplate_centrifuge_mock_lads.server as centrifuge
+import plateloc_mock_lads.server as plateloc
 from lads_common import ServerContext, ServerSpec, start_server
 from lads_common.nodesets import LADS_URI, VENDOR_URI
 
