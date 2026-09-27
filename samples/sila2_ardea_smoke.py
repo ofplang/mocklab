@@ -25,7 +25,7 @@ across the transfer, which is what a polling workflow client needs to be able to
 profile also makes the transfer longer than the default 10 s ceiling, so pass `--timeout 120`
 when running against it.
 
-Prerequisite: the compose stack is up. Exit code 0 means the sequence passed.
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the sequence passed.
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Shared laboratory-model client for the mock SiLA2 servers.
+"""Shared laboratory-model client for the mock instruments behind the SiLA2 and LADS servers.
 
 Two concerns, both of which every server needs and neither of which is instrument-specific:
 `config` reads where the laboratory model is, and `transport` talks to it. Re-exported here

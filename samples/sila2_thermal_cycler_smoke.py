@@ -1,6 +1,6 @@
 """Smoke test for the Automated Thermal Cycler mock, driven over SiLA2 directly.
 
-This server has the most internal state of the six, and the command order below is that
+This server has the most internal state of the five, and the command order below is that
 state machine rather than an arbitrary sequence: a protocol must be loaded and validated
 before StartRun is allowed, the lid must be closed over a plate that is actually present,
 and the run continues until StopRun (StartRun returns while the instrument is still
@@ -11,7 +11,7 @@ Note the two distinct state readouts exercised here: `GetInstrumentState` return
 InstrumentState enum (0=IDLE, 1=STANDBY, 2=RUNNING, 3=ERROR, 4=DIAGNOSTICS), which is a
 different enumeration from the `Status` property the other samples print.
 
-Prerequisite: the compose stack is up. Exit code 0 means the sequence passed.
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the sequence passed.
 """
 
 from __future__ import annotations

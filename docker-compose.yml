@@ -215,7 +215,7 @@ services:
   #     Base6          thermal cycler
   #
   # The locations on the right must be spots the seed declares, and the map is read at startup:
-  # editing it takes a `--force-recreate`, not a rebuild. See the ardea server's `stations.py`.
+  # editing it takes a `--force-recreate`, not a rebuild. See `instruments/mock_instruments/stations.py`.
   ardea-server-1:
     <<: *ardea-server
     profiles: ["sila2"]

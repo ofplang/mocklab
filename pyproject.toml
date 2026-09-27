@@ -36,7 +36,8 @@ dev = [
 
 [tool.pytest.ini_options]
 # Tests live next to the component they cover (laboratory_model/tests/,
-# laboratory-client/tests/, instruments/tests/, tools/tests/ and protocols/sila2/servers/<name>/tests/). A
+# laboratory-client/tests/, instruments/tests/, tools/tests/, protocols/sila2/servers/<name>/tests/,
+# protocols/lads/lads_common/tests/ and protocols/lads/servers/tests/). A
 # component whose tests import it contributes one entry here and one to `pythonpath`, which is
 # what makes `import app...` or `import mock_instruments...` resolve without installing anything.
 # The instrument behaviour in `instruments/` imports nothing from sila2 or asyncua, so its tests
@@ -74,13 +75,14 @@ pythonpath = [
 addopts = "-ra --import-mode=importlib"
 
 # Code the sila2 generator owns is regenerated wholesale, so it is not ours to style or
-# type-check: the `generated/` trees, and each server's `__main__.py` entry point. All five
+# type-check: the `generated/` trees, and each SiLA2 server's `__main__.py` entry point. All five
 # copies of that entry point are byte-identical pure generator output, and the point of
 # reading the laboratory-model settings straight from the environment (in laboratory_client)
 # is to keep them that way -- they previously carried a hand-written block of CLI options,
 # which contradicted this exclusion. Everything else -- the feature implementations,
 # server.py, instruments/, laboratory_model/, laboratory-client/, samples/ and the tests -- is
 # hand-written and is checked. Both tools below repeat this exclusion in their own syntax.
+# (The LADS servers' `__main__.py` are a few hand-written lines, caught by the same pattern.)
 [tool.ruff]
 line-length = 120
 target-version = "py314"

@@ -6,7 +6,7 @@ in the laboratory model -- OpenDoor/CloseDoor toggle the accessibility of its lo
 and SpinCycle refuses to run unless a plate is present there -- so the script seeds that
 plate first.
 
-Prerequisite: the compose stack is up. Exit code 0 means the whole sequence passed; any
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the whole sequence passed; any
 rejection inside the mock propagates as an exception and a non-zero exit.
 """
 

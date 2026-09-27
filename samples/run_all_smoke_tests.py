@@ -6,7 +6,8 @@ each of the five mock servers gets exercised -- over SiLA2 by default, over LADS
 separate process so that one server's failure -- or a crash in its script -- cannot take the
 rest of the run down with it.
 
-Prerequisite: the compose stack is up. Exit code 0 means every script passed.
+Prerequisite: the stack is up with the profile of the protocol checked -- `sila2` (the default),
+`lads`, or both for `--protocol both`. Exit code 0 means every script passed.
 """
 
 from __future__ import annotations

@@ -20,7 +20,7 @@ Two properties are worth naming because they drive the ordering below:
 The world model is used only to set the scene and to check the result; everything in
 between happens through SiLA2 commands, exactly as a workflow client would do it.
 
-Prerequisite: the compose stack is up. Exit code 0 means the circuit completed and the
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the circuit completed and the
 final world state was as expected.
 """
 

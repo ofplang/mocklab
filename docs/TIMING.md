@@ -30,7 +30,7 @@ instrument.sleep_for("OpenDoor") （各コマンドが自分の SiLA2 コマン�
 ```
 
 - **入力が YAML なのは人が読んで書くため、出力が JSON なのはプログラムしか読まないため。**
-  この分担のおかげで **PyYAML は builder ステージだけに入り、5 つのランタイムイメージには増えません**。
+  この分担のおかげで **PyYAML は builder ステージだけに入り、10 のランタイムイメージ（SiLA2 と LADS の各 5 台）には増えません**。
 - **焼き込みなので、値を変えるにはリビルドが必要**です（マウントではありません）。
   焼き込まれた内容は `docker compose exec sila2-server-1 cat /app/command_durations.json` で確認できます。
 - プロファイルの切り替えは build arg 1 つ:
@@ -134,6 +134,6 @@ uv run python samples/run_all_smoke_tests.py --timeout 120
   **報告する phase の数（7）で等分して消費**するので、ポーリングするクライアントに経路の進行が見えます。
   既定プロファイルでは 0 秒＝待たないので、phase は一瞬で流れます。
 - **station には所要時間を書けません**（書いても誰も読みません）。station は seed が spot を宣言するだけの
-  device で、SiLA2 サーバーが無いためです。`tools/tests/` の
+  device で、どちらのプロトコルのサーバーも無いためです。`tools/tests/` の
   `test_profiles_describe_only_devices_that_have_a_server` がこれを検査します
   — seed に宣言があるだけでは足りない、という点が seed ベースの検査との違いです。

@@ -6,7 +6,7 @@ which makes this sample the reference case for value-returning commands -- the p
 labcode's partial-outputs support needs from a real instrument. The script therefore
 brackets a Peel with two GetTapeLeft reads so the consumption is visible in the output.
 
-Prerequisite: the compose stack is up. Exit code 0 means the sequence passed.
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the sequence passed.
 """
 
 from __future__ import annotations

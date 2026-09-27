@@ -6,7 +6,7 @@ cycle count is the observable side effect of running a seal. The script therefor
 the defaults, overrides them, runs one cycle, and finally resets -- which restores the
 factory defaults and zeroes the cycle count, so repeated runs start from the same place.
 
-Prerequisite: the compose stack is up. Exit code 0 means the sequence passed.
+Prerequisite: the stack is up with the `sila2` profile. Exit code 0 means the sequence passed.
 """
 
 from __future__ import annotations

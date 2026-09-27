@@ -1,7 +1,7 @@
 [project]
 name = "laboratory-client"
 version = "0.1.0"
-description = "Shared HTTP transport for reaching the laboratory model from the mock SiLA2 servers"
+description = "Shared HTTP transport for reaching the laboratory model from the mock instruments (SiLA2 and LADS OPC UA)"
 requires-python = ">=3.10"
 # No dependencies on purpose: the transport is built on the standard library (urllib +
 # json), so a server image installs this without pulling anything new in.

@@ -51,7 +51,7 @@ curl -sS http://localhost:8001/health          # {"status":"healthy"}
 curl -sS http://localhost:8001/devices         # 宣言済み device の一覧
 ```
 
-SiLA2 サーバー群への疎通は下記「直接接続の確認」で行う。
+SiLA2・LADS のサーバー群への疎通は下記「直接接続の確認」で行う。
 
 ## 世界の状態を見る・戻す
 
@@ -166,10 +166,14 @@ uv run pytest
 
 in-process で動くので compose スタックの起動は不要。方針は `docs/RULES.md`「テスト方針」。
 
-サーバー側のテストを追加する場合も同じ方針で `protocols/sila2/servers/<name>/tests/` に置き、ルート
-`[tool.pytest.ini_options]` の `testpaths` に 1 行追加する（**そのテストが対象を import する場合だけ**
-`pythonpath` にも足す）。現在は `protocols/sila2/servers/ardea_mock_sila2/tests/` があり、Feature 定義をファイルとして
-読むだけなので `testpaths` のみである。
+サーバー側のテストを追加する場合も同じ方針で置き、ルート `[tool.pytest.ini_options]` の `testpaths` に
+1 行追加する（**そのテストが対象を import する場合だけ** `pythonpath` にも足す）。
+
+- SiLA2: `protocols/sila2/servers/<name>/tests/`。現在は `protocols/sila2/servers/ardea_mock_sila2/tests/` があり、
+  Feature 定義をファイルとして読むだけなので `testpaths` のみである。
+- LADS: 5 台分をまとめた `protocols/lads/servers/tests/` と `protocols/lads/lads_common/tests/`。
+  サーバーを import して in-process で起動するので、`protocols/lads/lads_common` と各 `*_mock_lads` を
+  `pythonpath` にも足してある。
 
 ## 静的チェック
 
@@ -179,7 +183,8 @@ uv run ruff check --fix .
 uv run mypy
 ```
 
-設定はルートの `pyproject.toml`。`generated/` と各サーバーの `__main__.py` は生成コードなので対象外。
+設定はルートの `pyproject.toml`。`generated/` と SiLA2 サーバーの `__main__.py` は生成コードなので対象外。
+LADS サーバーの `__main__.py`（数行の手書きの入口）も同じ除外パターンにかかって対象外になっている。
 方針は `docs/RULES.md`「静的チェック方針」。
 
 ## CI
@@ -201,7 +206,9 @@ uv run python samples/run_roundabout.py          # 装置を一周する統合�
 ```
 
 正常時は `All smoke tests passed.` / `Laboratory model smoke test passed.` /
-`Roundabout workflow passed.` と表示される。
+`Roundabout workflow passed.` と表示される（LADS 版は `All smoke tests passed.` /
+`LADS roundabout workflow passed.`、parity 検査は
+`Parity check passed: SiLA2 and LADS OPC UA behaved the same.`）。
 
 LADS 版（profile `lads` で起動しておく）:
 
@@ -256,8 +263,12 @@ docker compose logs --tail=200 sila2-server-1
 
 ## 注意事項
 
-- ホストからは公開ポート `50052`〜`50055` と `50057` で各 SiLA2 サーバーへ、`8001` で `laboratory_model` へアクセスする。**50056 は空き**（station にサーバーが無いため）。
-- コンテナ間はサービスのコンテナ名と**内部ポート** `50052`（SiLA2）／`8001`（laboratory-model）を使う。
-  ホスト公開ポート `50053`〜`50055` と `50057` はホストからのアクセス用で、コンテナ内部からそのまま使う前提ではない。
+- ホストからは公開ポート `50052`〜`50055` と `50057` で各 SiLA2 サーバーへ、`4841`〜`4844` と `4847` で各 LADS
+  サーバー（`opc.tcp://localhost:<port>/`）へ、`8001` で `laboratory_model` へアクセスする。
+  **50056 と 4845〜4846 は空き**（station にサーバーが無いため）。
+- コンテナ間はサービスのコンテナ名と**内部ポート** `50052`（SiLA2）／`4840`（LADS）／`8001`（laboratory-model）を使う。
+  ホスト公開ポートはホストからのアクセス用で、コンテナ内部からそのまま使う前提ではない。
+- LADS の公開ポートが別の OPC UA スタックと衝突するときは、`docker-compose.yml` を編集せず override ファイルで
+  付け替える（手順は README の「Container networking」）。
 - **Git Bash から `docker compose exec` にコンテナ内の絶対パスを渡すとパスが変換される**
   （`/app/...` が `C:/Program Files/Git/app/...` になる）。PowerShell を使うか `MSYS_NO_PATHCONV=1` を付ける。

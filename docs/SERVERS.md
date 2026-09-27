@@ -122,7 +122,7 @@ ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,
 
 | | 値 |
 |---|---|
-| `Status` プロパティ（**Ardea 以外の 5 台**） | 0=Not Connected, 1=Idle, 2=Running, 3=Error |
+| `Status` プロパティ（**Ardea 以外の 4 台**） | 0=Not Connected, 1=Idle, 2=Running, 3=Error |
 | `InstrumentState`（thermal cycler の `GetInstrumentState` 応答のみ） | 0=IDLE, 1=STANDBY, 2=RUNNING, 3=ERROR, 4=DIAGNOSTICS |
 
 **Ardea の Feature には `Status` プロパティが無い**（実機の Feature 定義にそもそも無く、編集もしない）。

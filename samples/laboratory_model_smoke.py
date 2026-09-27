@@ -1,7 +1,7 @@
 """Smoke test for the laboratory model service itself, over plain HTTP.
 
-The only sample with no SiLA2 involvement: it tests the world model as a component, so it
-is not part of `run_all_smoke_tests.py` (which is scoped to the six instrument servers)
+The only sample that speaks no instrument protocol: it tests the world model as a component, so
+it is not part of `run_all_smoke_tests.py` (which is scoped to the five instrument servers)
 and is run on its own. What it pins down is the model's rule set, in the order the rules
 fire:
 

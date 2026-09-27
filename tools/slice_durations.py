@@ -9,7 +9,7 @@ Two format choices are worth knowing:
 
 * the input is YAML because it is meant to be read and commented by people, and the output is
   JSON because it is only ever read by a program -- which is what keeps PyYAML in this builder
-  stage instead of in five runtime images;
+  stage instead of in ten runtime images (five per protocol);
 * the output keeps the *same shape* as the device's section in the input (a `commands` mapping
   of mappings) rather than flattening to name -> seconds. Flattening would read more nicely
   today and would have to be undone the moment a per-command setting other than `duration`

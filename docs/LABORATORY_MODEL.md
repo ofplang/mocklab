@@ -2,7 +2,7 @@
 
 ## 概要
 
-`laboratory_model` は、Docker Compose 上の各 SiLA2 サーバーから共有参照される簡易な世界状態サービスである。
+`laboratory_model` は、Docker Compose 上の各モックサーバー（SiLA2・LADS OPC UA の両方）から共有参照される簡易な世界状態サービスである。
 **device 中心**の世界を持ち、各 device が固定の **spot**（item が置ける場所）集合と、無解釈の **state**（key-value）を持つ。
 
 ## 誰がこのサービスを使うのか（最重要）
@@ -11,13 +11,13 @@
 
 | | 接触 | 理由 |
 |---|---|---|
-| モック SiLA2 サーバー | する | 物理効果を反映し、前提を確認するため |
+| モックサーバー（SiLA2・LADS） | する | 物理効果を反映し、前提を確認するため |
 | このリポジトリの `samples/` | してよい | モック自体のテスト。意図的にモック専用で、実機に対しては走らせない |
 | **ワークフロークライアント（labcode 等）** | **してはいけない** | 実機に持ち運べる必要がある |
 | 運用者 | してよい | reality の確認と t=0 への復帰（`docs/OPERATIONS.md`） |
 
 クライアントがこのサービスを触ると、そのコードは実機に対して走らせられなくなる。触る必要が無いのは、
-**世界の側の前提の齟齬が、装置のコマンドの失敗として SiLA2 経由で届く**からである。
+**世界の側の前提の齟齬が、装置のコマンドの失敗として SiLA2（または LADS OPC UA）経由で届く**からである。
 
 | 齟齬 | クライアントが受け取るもの |
 |---|---|
@@ -154,16 +154,20 @@ boundary:
 
 ## サーバー連携
 
-- 各 SiLA2 サーバーは `LABORATORY_MODEL_URL` と `LABORATORY_MODEL_LOCATION` を環境変数で受け取る
-  （`docker-compose.yml` の各サービスの `environment:` で設定する。`SILA_SERVER_NAME` / `SILA_SERVER_TYPE` と同じ経路）。
+- 各サーバーは `LABORATORY_MODEL_URL` と `LABORATORY_MODEL_LOCATION` を環境変数で受け取る
+  （`docker-compose.yml` の各サービスの `environment:` で設定する。SiLA2 の `SILA_SERVER_NAME` / `SILA_SERVER_TYPE`、
+  LADS の `LADS_SERVER_NAME` / `LADS_SERVER_TYPE` と同じ経路）。
   **`LABORATORY_MODEL_LOCATION` はシードが宣言した spot を指していなければならない**。さもなくばそのサーバーの
   world 呼び出しは `unknown_location` で失敗する。
 - 読み取りと検証は共有パッケージ `laboratory-client` の `load_laboratory_model_config()` に集約し、
-  各サーバーの `Server.__init__` から呼ぶ。未設定は「world model なしで動かす」正当な構成として許容するが、
+  装置の振る舞い（`mock_instruments`）の `from_environment()` から呼ぶ。SiLA2・LADS のサーバーはどちらも
+  `from_environment()` を呼ぶだけで、設定を自分では読まない。未設定は「world model なしで動かす」正当な構成として許容するが、
   **設定されていて空・前後に空白がある場合は起動時エラー**とする（黙って trim しない）。
 - HTTP の機構（URL 組み立て・JSON・タイムアウト・エラー変換）も `laboratory-client` にある。
-  **世界の意味づけ（回転にはプレートが要る、開いた扉は到達可能を意味する）は各サーバーに残す** —
+  **世界の意味づけ（回転にはプレートが要る、開いた扉は到達可能を意味する）は装置の振る舞い（`instruments/`）に残す** —
   world state の解釈は、それを行うコマンドに属する。
+- 以下のコマンド名は SiLA2 のもの。LADS 版では同じ操作が program・cover の Open/Close になり
+  （対応は `docs/LADS_MAPPING.md`）、世界への作用は共有の `instruments/` にあるので同一である。
 - 現在は次のコマンドが laboratory model の item presence を参照する。
   - `MicroplateCentrifugeController.SpinCycle`
   - `PlateLocController.StartCycle`
@@ -194,7 +198,8 @@ boundary:
 ## テスト
 
 - 規則そのものの検証は `laboratory_model/tests/`（docker 非依存・`uv run pytest`）。
-- 配備の確認は `samples/laboratory_model_smoke.py`（単体）と `samples/run_roundabout.py`（装置を一周）。
+- 配備の確認は `samples/laboratory_model_smoke.py`（単体）、`samples/run_roundabout.py`（装置を一周、SiLA2）、
+  `samples/run_lads_roundabout.py`（同じ一周を LADS で）、`samples/run_parity.py`（両プロトコルの一致）。
   いずれも冒頭で `/reset` して**世界を破壊する**ので、並列実行や、ワークフロー実行中のスタックに対しては走らせない。
 - 方針は `docs/RULES.md`「テスト方針」、手順は `docs/OPERATIONS.md`。
 

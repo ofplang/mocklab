@@ -36,7 +36,8 @@
 - 設定はルートの `pyproject.toml` に集約する（`[tool.ruff]` / `[tool.mypy]`）。実行はリポジトリルートから
   `uv run ruff check .` と `uv run mypy`。
 - **対象は手書きコードのみ**。sila2 のコードジェネレータが所有する成果物は再生成対象なので除外する:
-  `generated/` 配下、および各サーバーの `__main__.py`。コメント方針の「生成コードには手を入れない」と同じ線引きである。
+  `generated/` 配下、および SiLA2 サーバーの `__main__.py`。コメント方針の「生成コードには手を入れない」と同じ線引きである。
+  （LADS サーバーの `__main__.py` は数行の手書きの入口だが、同じ除外パターン `**/__main__.py` にかかる。）
 - **SiLA2 サーバーの `__main__.py` は 5 台すべてで完全に同一の純生成物に保つ**（同一性は
   `sha256sum protocols/sila2/servers/*/*/__main__.py` で確認できる）。サーバーへの設定は**すべて環境変数で渡し**、
   読み取りと検証は手書き側（`laboratory-client`・`instruments/`・`server.py`）に置く。
@@ -132,7 +133,7 @@
 - **統合スクリプトを回すべきタイミング**: seed の spot 名を変えたとき／`protocols/sila2/specs/` の Feature を差し替えたとき／
   `sila2` のバージョンを上げたとき。継ぎ目には自動回帰が無いので、この 3 つは手で回す。
 - **テストは対象コードの隣に置く**（`laboratory_model/tests/`、`laboratory-client/tests/`、`instruments/tests/`、`tools/tests/`、
-  `protocols/sila2/servers/<name>/tests/`）。**依存とテスト設定はルートの `pyproject.toml` に集約する**。
+  `protocols/sila2/servers/<name>/tests/`、`protocols/lads/lads_common/tests/`、`protocols/lads/servers/tests/`）。**依存とテスト設定はルートの `pyproject.toml` に集約する**。
   1 コンポーネントごとに `testpaths` に 1 エントリ足し、**そのテストが対象を import する場合だけ**
   `pythonpath` にも足す（`protocols/sila2/servers/ardea_mock_sila2/tests/` はファイルを読むだけなので `testpaths` のみ）。
 - `--import-mode=importlib` を使う。同名のテストファイルが複数コンポーネントに現れても衝突しないため。
@@ -172,7 +173,7 @@
   プロトコル非依存の装置の振る舞い `instruments/`（§プロトコルと装置の振る舞いの分離）、
   ビルド時ヘルパ `tools/` を含む。
 - **サーバーを持たない device がある**: station（ワークフローの入口・出口）は seed が 2 spot を宣言するだけで、
-  SiLA2 サーバーは無い。ラックには commandable なものが無く、実機ラボでもサーバーは付かない。
+  サーバーは無い（SiLA2 にも LADS にも）。ラックには commandable なものが無く、実機ラボでもサーバーは付かない。
   以前あった station サーバーは `Reset` と変化しない `Status` だけを持っており、モックする対象が無かった。
   **device の一覧とサーバーの一覧は一致しない**という前提で読むこと。
 - **5 台のうち Ardea だけは実在する機器のモック**である（搬送役）。実機 `ardea-sila2` の Feature 定義 9 本を
