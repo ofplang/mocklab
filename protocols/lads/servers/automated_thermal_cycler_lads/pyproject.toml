@@ -1,0 +1,16 @@
+[project]
+name = "automated_thermal_cycler_lads"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    # Installed from ./protocols/lads/lads_common (which brings asyncua and needs
+    # mock-instruments and laboratory-client) by this server's Dockerfile, ahead of this package.
+    "lads-common",
+]
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["automated_thermal_cycler_lads*"]

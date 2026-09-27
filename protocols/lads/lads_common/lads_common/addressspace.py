@@ -217,9 +217,7 @@ class ModelBuilder:
 
         # Methods have no TypeDefinition: their members (InputArguments/OutputArguments)
         # come from the declaration only.
-        members = await self._collect_members(
-            declarations, type_id if source_class != ua.NodeClass.Method else None
-        )
+        members = await self._collect_members(declarations, type_id if source_class != ua.NodeClass.Method else None)
         for descs in members.values():
             # The most derived declaration decides the modelling rule, because an
             # override may promote an Optional member to Mandatory (e.g. Lock).
@@ -311,7 +309,7 @@ class ModelBuilder:
         current = await version.read_value()
         try:
             number = int(current)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             number = 0
         await version.write_value(ua.Variant(str(number + 1), ua.VariantType.String))
 

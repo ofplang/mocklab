@@ -53,6 +53,48 @@ x-thermal-cycler-server: &thermal-cycler-server
     - laboratory-model
   command: ["python", "-m", "automated_thermal_cycler_server", "--ip-address", "0.0.0.0", "--port", "50052", "--insecure", "--verbose"]
 
+# The LADS OPC UA servers of the same instruments (the `lads` profile, below). Same build context
+# and duration profile as the SiLA2 anchors above; OPC UA's registered port 4840 inside.
+x-lads-microplate-centrifuge-server: &lads-microplate-centrifuge-server
+  build:
+    context: .
+    dockerfile: protocols/lads/servers/microplate_centrifuge_lads/Dockerfile
+    args:
+      DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
+  depends_on:
+    - laboratory-model
+  command: ["python", "-m", "microplate_centrifuge_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+
+x-lads-plateloc-server: &lads-plateloc-server
+  build:
+    context: .
+    dockerfile: protocols/lads/servers/plateloc_lads/Dockerfile
+    args:
+      DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
+  depends_on:
+    - laboratory-model
+  command: ["python", "-m", "plateloc_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+
+x-lads-plate-seal-remover-server: &lads-plate-seal-remover-server
+  build:
+    context: .
+    dockerfile: protocols/lads/servers/automated_plate_seal_remover_lads/Dockerfile
+    args:
+      DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
+  depends_on:
+    - laboratory-model
+  command: ["python", "-m", "automated_plate_seal_remover_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+
+x-lads-thermal-cycler-server: &lads-thermal-cycler-server
+  build:
+    context: .
+    dockerfile: protocols/lads/servers/automated_thermal_cycler_lads/Dockerfile
+    args:
+      DURATIONS_FILE: ${DURATIONS_FILE:-command_durations.yaml}
+  depends_on:
+    - laboratory-model
+  command: ["python", "-m", "automated_thermal_cycler_lads", "--ip-address", "0.0.0.0", "--port", "4840", "--insecure", "--verbose"]
+
 services:
   laboratory-model:
     build:
@@ -160,3 +202,60 @@ services:
       - LABORATORY_MODEL_LOCATION=ardea.gripper
       - SILA_SERVER_NAME=Ardea
       - ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,Base4=plateloc.stage,Base5=centrifuge.deck,Base6=thermal-cycler.block
+
+  # --- LADS OPC UA servers. The same four instruments, served over OPC UA with the LADS
+  # --- information model instead of SiLA2 (`docs/LADS_MAPPING.md`). They sit behind the `lads`
+  # --- profile, so a plain `docker compose up` starts exactly what it always did; add
+  # --- `--profile lads` (or COMPOSE_PROFILES=lads) to start them alongside.
+  #
+  # Each acts on the same world-model location as its SiLA2 counterpart and bakes in the same
+  # durations, so the two protocols behave alike. Running both at once is possible -- they share
+  # the one world -- but each has its own one-command-at-a-time guard, so nothing stops a SiLA2 and
+  # a LADS client from driving the same instrument at the same time.
+  lads-server-1:
+    <<: *lads-microplate-centrifuge-server
+    profiles: ["lads"]
+    ports:
+      - "4841:4840"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LADS_SERVER_TYPE=MicroplateCentrifugeServer
+      - LADS_SERVER_NAME=Agilent-Microplate-Centrifuge
+      - LABORATORY_MODEL_URL=http://laboratory-model:8001
+      - LABORATORY_MODEL_LOCATION=centrifuge.deck
+
+  lads-server-2:
+    <<: *lads-plateloc-server
+    profiles: ["lads"]
+    ports:
+      - "4842:4840"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LADS_SERVER_TYPE=PlateLocServer
+      - LADS_SERVER_NAME=Agilent-PlateLoc
+      - LABORATORY_MODEL_URL=http://laboratory-model:8001
+      - LABORATORY_MODEL_LOCATION=plateloc.stage
+
+  lads-server-3:
+    <<: *lads-plate-seal-remover-server
+    profiles: ["lads"]
+    ports:
+      - "4843:4840"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LADS_SERVER_TYPE=AutomatedPlateSealRemoverServer
+      - LADS_SERVER_NAME=Azenta-Automated-Plate-Seal-Remover
+      - LABORATORY_MODEL_URL=http://laboratory-model:8001
+      - LABORATORY_MODEL_LOCATION=seal-remover.stage
+
+  lads-server-4:
+    <<: *lads-thermal-cycler-server
+    profiles: ["lads"]
+    ports:
+      - "4844:4840"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LADS_SERVER_TYPE=AutomatedThermalCyclerServer
+      - LADS_SERVER_NAME=ThermoFisher-Thermal-Cycler
+      - LABORATORY_MODEL_URL=http://laboratory-model:8001
+      - LABORATORY_MODEL_LOCATION=thermal-cycler.block

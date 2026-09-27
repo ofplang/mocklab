@@ -56,8 +56,18 @@ dev = [
 # after the distribution (`laboratory-client`) makes that collision impossible, since a
 # hyphen cannot appear in a module name. `laboratory_model/` avoids the same trap by holding
 # a package called `app`, and `instruments/` by holding one called `mock_instruments`.
-testpaths = ["laboratory_model/tests", "laboratory-client/tests", "instruments/tests", "tools/tests", "protocols/sila2/servers/ardea_server/tests", "protocols/lads/lads_common/tests"]
-pythonpath = ["laboratory_model", "laboratory-client", "instruments", "protocols/lads/lads_common", "tools"]
+testpaths = ["laboratory_model/tests", "laboratory-client/tests", "instruments/tests", "tools/tests", "protocols/sila2/servers/ardea_server/tests", "protocols/lads/lads_common/tests", "protocols/lads/servers/tests"]
+pythonpath = [
+    "laboratory_model",
+    "laboratory-client",
+    "instruments",
+    "protocols/lads/lads_common",
+    "protocols/lads/servers/microplate_centrifuge_lads",
+    "protocols/lads/servers/automated_thermal_cycler_lads",
+    "protocols/lads/servers/plateloc_lads",
+    "protocols/lads/servers/automated_plate_seal_remover_lads",
+    "tools",
+]
 # -ra summarises non-passing outcomes. --import-mode=importlib keeps test modules from
 # colliding once several components have a tests/ directory holding same-named files.
 addopts = "-ra --import-mode=importlib"
@@ -84,9 +94,22 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "W"]
 # None of these is installed into the dev environment, so ruff would otherwise file them
 # under third-party: `app` is the laboratory model's own package, `laboratory_client` the
 # shared HTTP client, `mock_instruments` the protocol-independent instrument behaviour the servers expose,
-# and `common` the helper module the sample scripts share. Declaring them keeps our imports in
+# `lads_common` and the `*_lads` packages the LADS OPC UA runtime and servers,
+# and `common` / `lads_client` the helper modules the sample scripts share. Declaring them keeps our imports in
 # their own block.
-known-first-party = ["app", "common", "laboratory_client", "lads_common", "mock_instruments", "slice_durations"]
+known-first-party = [
+    "app",
+    "automated_plate_seal_remover_lads",
+    "automated_thermal_cycler_lads",
+    "common",
+    "laboratory_client",
+    "lads_client",
+    "lads_common",
+    "microplate_centrifuge_lads",
+    "mock_instruments",
+    "plateloc_lads",
+    "slice_durations",
+]
 
 # Non-strict, like the sibling repos: the point is to catch real type errors, not to
 # force annotations onto every function.
@@ -97,7 +120,17 @@ exclude = "(/generated/|__main__\\.py$)"
 # The shared packages are not installed into the dev environment, so point mypy at the
 # directories that hold them (mirroring pytest's `pythonpath` above); without this
 # the servers' `from mock_instruments import ...` would be an unresolved import.
-mypy_path = ["laboratory-client", "laboratory_model", "instruments", "protocols/lads/lads_common", "tools"]
+mypy_path = [
+    "laboratory-client",
+    "laboratory_model",
+    "instruments",
+    "protocols/lads/lads_common",
+    "protocols/lads/servers/microplate_centrifuge_lads",
+    "protocols/lads/servers/automated_thermal_cycler_lads",
+    "protocols/lads/servers/plateloc_lads",
+    "protocols/lads/servers/automated_plate_seal_remover_lads",
+    "tools",
+]
 # sila2, typer and uvicorn ship no stubs we depend on.
 ignore_missing_imports = true
 warn_unused_ignores = true

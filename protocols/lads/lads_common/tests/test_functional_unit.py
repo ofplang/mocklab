@@ -116,11 +116,17 @@ class UnitClient:
 def plateloc_build(instrument: PlateLoc) -> Callable[[ServerContext], Awaitable[None]]:
     async def build(context: ServerContext) -> None:
         device = await LadsDevice.create(
-            context.builder, "PlateLoc", DeviceIdentity(manufacturer="Test", model="PlateLoc", serial_number="1"),
+            context.builder,
+            "PlateLoc",
+            DeviceIdentity(manufacturer="Test", model="PlateLoc", serial_number="1"),
             asset_id="Test-PlateLoc",
         )
         unit = await FunctionalUnit.create(
-            device, context.bridge, "Sealer", status=instrument.status, stop=instrument.stop_cycle,
+            device,
+            context.bridge,
+            "Sealer",
+            status=instrument.status,
+            stop=instrument.stop_cycle,
             clear=instrument.reset,
         )
         await unit.add_program(
@@ -146,7 +152,9 @@ def plateloc_build(instrument: PlateLoc) -> Callable[[ServerContext], Awaitable[
 
 
 def test_a_program_runs_the_instrument_command_and_records_a_result() -> None:
-    instrument = PlateLoc(laboratory_model=UNCONFIGURED, durations=CommandDurations({"StartCycle": 0.3}))
+    instrument = PlateLoc(
+        laboratory_model=UNCONFIGURED, durations=CommandDurations({"StartCycle": 0.3, "StopCycle": 0.3})
+    )
 
     async def scenario(client: Client, vendor: int, lads: int) -> None:
         unit = UnitClient(client, vendor, lads, "PlateLoc.FunctionalUnitSet.Sealer")
@@ -163,8 +171,11 @@ def test_a_program_runs_the_instrument_command_and_records_a_result() -> None:
         current = unit.node("FunctionSet.SealingTemperature.CurrentValue")
         assert await current.read_value() == 175.0
 
-        # Stop runs StopCycle, which cools by 5 even though nothing is running.
+        # Stop runs StopCycle, which cools by 5 even though nothing is running. Like StartProgram,
+        # the call returns once the command has begun; the unit shows Stopping until it is done.
         await unit.call("Stop")
+        assert await unit.state() == "Stopping"
+        assert await unit.wait_for("Stopped") == "Stopped"
         assert instrument.actual_temperature == 170
         assert await current.read_value() == 170.0
 
@@ -221,11 +232,17 @@ def test_a_refusal_before_the_command_begins_changes_nothing() -> None:
 def cycler_build(instrument: ThermalCycler) -> Callable[[ServerContext], Awaitable[None]]:
     async def build(context: ServerContext) -> None:
         device = await LadsDevice.create(
-            context.builder, "Cycler", DeviceIdentity(manufacturer="Test", model="Cycler", serial_number="1"),
+            context.builder,
+            "Cycler",
+            DeviceIdentity(manufacturer="Test", model="Cycler", serial_number="1"),
             asset_id="Test-Cycler",
         )
         unit = await FunctionalUnit.create(
-            device, context.bridge, "Cycler", status=instrument.status, stop=instrument.stop_run,
+            device,
+            context.bridge,
+            "Cycler",
+            status=instrument.status,
+            stop=instrument.stop_run,
             clear=instrument.reset,
         )
         await unit.add_program(
@@ -266,12 +283,12 @@ def test_a_failure_after_begin_aborts_the_unit_until_clear() -> None:
             await unit.start_program("Validate", MaxSampleVolume=10)
         assert aborted.value.code == ua.StatusCodes.BadInvalidState
         await unit.call("Clear")
-        assert await unit.state() == "Stopped"
+        assert await unit.wait_for("Stopped") == "Stopped"
 
         # Abort + Clear is the LADS spelling of SiLA2 Reset from Idle.
         await unit.call("Abort")
         assert await unit.state() == "Aborted"
         await unit.call("Clear")
-        assert await unit.state() == "Stopped"
+        assert await unit.wait_for("Stopped") == "Stopped"
 
     asyncio.run(serving(cycler_build(instrument), scenario))

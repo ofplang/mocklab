@@ -19,7 +19,8 @@ the instrument, so it cannot disagree with what the SiLA2 server of the same ins
     -                             yes                  Running
     1 Idle / 0 Not Connected      no                   Stopped
 
-(`Stopping`, `Aborting` and `Clearing` are shown while those methods are being processed.)
+(`Stopping` and `Clearing` are shown from the moment Stop or Clear has begun its instrument command
+until that command completes; the methods return at the start, like StartProgram.)
 
 Methods:
 - StartProgram: only in Stopped, as LADS requires. This is stricter than SiLA2, whose commands are
@@ -29,7 +30,7 @@ Methods:
 - Stop: runs the unit's stop command (e.g. PlateLoc's StopCycle). Like the SiLA2 stop commands,
   it does not interrupt a command already executing -- the mocks cannot -- and it runs even when
   nothing is running, because some stop commands have effects of their own.
-- Abort: marks the unit Aborted. It cannot interrupt an executing command either.
+- Abort: marks the unit Aborted at once. It cannot interrupt an executing command either.
 - Clear: Aborted -> Stopped by running the unit's clear command, the counterpart of SiLA2 Reset.
   So SiLA2 `Reset` is LADS `Abort` + `Clear` (or just `Clear` once the instrument is in Error).
 
@@ -42,10 +43,9 @@ Adapted from the lads-test prototype, whose units kept their own state machine r
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import time
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -157,8 +157,8 @@ class FunctionalUnit:
         self._results: list[Node] = []
         self._running: _Run | None = None
         self._aborted = False
-        # A method being processed shows its transient state (Stopping, ...) instead of the
-        # derived one until it returns.
+        # While Stop or Clear is carrying out its instrument command, CurrentState shows that
+        # transition (Stopping, Clearing) instead of the derived state.
         self._transient: str | None = None
         self._stop_command: UnitCommand | None = None
         self._clear_command: UnitCommand | None = None
@@ -245,6 +245,31 @@ class FunctionalUnit:
             self._active_program[name] = await b.add_optional(active_program, name)
         await self._reset_active_program()
 
+    async def add_readout(
+        self,
+        name: str,
+        read: Callable[[], object],
+        varianttype: ua.VariantType,
+        *,
+        observable: Observable[Any] | None = None,
+    ) -> Node:
+        """Publish an instrument value with no LADS counterpart as a vendor variable on the unit
+        (a cycle count, a profile list, a firmware version string, ...).
+
+        `read` is called on the event loop -- instrument readouts are plain attribute reads -- and
+        its value republished after every program, stop and clear. If the instrument publishes the
+        value as an `Observable` (the thermal cycler's elapsed time), pass it too and every change
+        is published as it happens, in order."""
+        node = await self.builder.add_vendor_variable(self.node, name, read(), varianttype)
+
+        async def publish(_value: object = None) -> None:
+            await node.write_value(ua.Variant(read(), varianttype))
+
+        self.add_refresher(publish)
+        if observable is not None:
+            observable.subscribe(self.bridge.listener(publish))
+        return node
+
     def add_refresher(self, refresh: Callable[[], Awaitable[None]]) -> None:
         """Register a coroutine that republishes instrument values (a function's CurrentValue,
         ...). Every refresher runs after each program, stop and clear finishes."""
@@ -267,20 +292,13 @@ class FunctionalUnit:
             return "Running"
         return "Stopped"
 
-    async def refresh_state(self) -> None:
-        await self.state.set(self._transient or self.derived_state())
+    def current_state(self) -> str:
+        """What CurrentState shows: a method's transition while one is in progress, else the
+        derived state."""
+        return self._transient or self.derived_state()
 
-    @contextlib.asynccontextmanager
-    async def _showing(self, transient: str) -> AsyncIterator[None]:
-        self._transient = transient
-        await self.refresh_state()
-        try:
-            yield
-        finally:
-            self._transient = None
-            # Settle what the instrument published meanwhile before deriving the final state.
-            await self.bridge.flush()
-            await self.refresh_state()
+    async def refresh_state(self) -> None:
+        await self.state.set(self.current_state())
 
     # -- program templates ----------------------------------------------------------------------
 
@@ -320,7 +338,7 @@ class FunctionalUnit:
         supervisory_task_id: str | None,
         samples: list | None,
     ) -> list[ua.Variant]:
-        state = self.derived_state()
+        state = self.current_state()
         if state != "Stopped":
             raise invalid_state(f"StartProgram requires state Stopped, current state is {state}")
         program = self._programs.get(template_id)
@@ -359,38 +377,76 @@ class FunctionalUnit:
         task = asyncio.ensure_future(coroutine)
         task.set_name(name)
 
+    # Stop and Clear run instrument commands that take time (StopCycle, Reset, ...), and asyncua
+    # answers the requests of one connection in order: a method call that waited for its command
+    # would hold up everything else that client sends, including the keep-alive reads it uses to
+    # decide the server is still there. So, like StartProgram, they return once their command has
+    # begun and show Stopping / Clearing until it completes -- the LADS way of reporting a
+    # transition anyway.
+
     async def _stop(self) -> None:
         logger.info("%s.Stop called", self.name)
-        if self.derived_state() not in ("Stopped", "Running"):
-            raise invalid_state(f"Stop is not allowed in state {self.derived_state()}")
-        async with self._showing("Stopping"):
-            if self._stop_command is not None:
-                await self._run_to_completion(self._stop_command)
-        await self.refresh_values()
+        state = self.current_state()
+        if state not in ("Stopped", "Running"):
+            raise invalid_state(f"Stop is not allowed in state {state}")
+        if self._stop_command is None:
+            return
+        await self._start_transition("Stop", "Stopping", self._stop_command)
 
     async def _abort(self) -> None:
+        # Nothing to interrupt: the mocks cannot stop a command already executing. Abort only
+        # marks the unit, which then needs Clear.
         logger.info("%s.Abort called", self.name)
-        if self.derived_state() == "Aborted":
-            return
-        async with self._showing("Aborting"):
-            self._aborted = True
+        self._aborted = True
+        await self.refresh_state()
 
     async def _clear(self) -> None:
         logger.info("%s.Clear called", self.name)
-        if self.derived_state() != "Aborted":
-            raise invalid_state(f"Clear requires state Aborted, current state is {self.derived_state()}")
-        async with self._showing("Clearing"):
-            if self._clear_command is not None:
-                # A clear the instrument refuses (e.g. a command is still executing) leaves the
-                # unit Aborted.
-                await self._run_to_completion(self._clear_command)
-            self._aborted = False
-            await self._reset_active_program()
-        await self.refresh_values()
+        state = self.current_state()
+        if state != "Aborted":
+            raise invalid_state(f"Clear requires state Aborted, current state is {state}")
+        if self._clear_command is None:
+            await self._cleared()
+            return
+        # A clear the instrument refuses before it begins (a command is still executing) is the
+        # call's StatusCode; one that fails after it begins leaves the unit Aborted.
+        await self._start_transition("Clear", "Clearing", self._clear_command, on_success=self._cleared)
 
-    async def _run_to_completion(self, command: UnitCommand) -> None:
+    async def _cleared(self) -> None:
+        self._aborted = False
+        await self._reset_active_program()
+        await self.refresh_state()
+
+    async def _start_transition(
+        self,
+        method: str,
+        transient: str,
+        command: UnitCommand,
+        *,
+        on_success: Callable[[], Awaitable[None]] | None = None,
+    ) -> None:
         started = await self.bridge.start(command)
-        await started.completion
+        self._transient = transient
+        await self.refresh_state()
+        self.server_task(self._finish_transition(method, started.completion, on_success), name=f"{self.name}.{method}")
+
+    async def _finish_transition(
+        self, method: str, completion: Awaitable[Any], on_success: Callable[[], Awaitable[None]] | None
+    ) -> None:
+        try:
+            await completion
+        except Exception as error:
+            logger.warning("%s.%s failed: %s", self.name, method, error)
+            await self.set_last_error(message_for(f"{self.name}.{method}", error))
+        else:
+            if on_success is not None:
+                await on_success()
+        finally:
+            self._transient = None
+            # Settle what the instrument published meanwhile before deriving the final state.
+            await self.bridge.flush()
+            await self.refresh_state()
+            await self.refresh_values()
 
     # -- program execution --------------------------------------------------------------------------
 
@@ -413,19 +469,21 @@ class FunctionalUnit:
 
         runtime_ms = (time.monotonic() - run.started_monotonic) * 1000.0
         await self._write_active("CurrentRuntime", runtime_ms, ua.VariantType.Double)
-        result_properties = {key: str(value) for key, value in (outputs or {}).items()}
-        try:
-            await self._record_result(program, run, runtime_ms, outcome, result_properties)
-        except Exception:
-            # A broken result must never leave the unit stuck in Running.
-            logger.exception("%s failed to record result for %s", self.name, run.run_id)
         logger.info("%s program %s finished: %s", self.name, run.run_id, outcome)
         if outcome == "Completed":
             await self.set_last_error("")
+        # Settle everything the run changed -- the state, and the values it moved (a cycle count,
+        # a heater temperature) -- before the Result appears: a client takes the Result as the
+        # signal that the run is over, and must not then read a value from before it.
         self._running = None
         await self.bridge.flush()
         await self.refresh_state()
         await self.refresh_values()
+        result_properties = {key: str(value) for key, value in (outputs or {}).items()}
+        try:
+            await self._record_result(program, run, runtime_ms, outcome, result_properties)
+        except Exception:
+            logger.exception("%s failed to record result for %s", self.name, run.run_id)
 
     async def _tick_runtime(self, started_monotonic: float) -> None:
         while True:

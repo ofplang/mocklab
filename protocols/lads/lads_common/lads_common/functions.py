@@ -200,6 +200,9 @@ class _ControlFunction(_Function):
         self._current: Getter
         self._target: Getter
         self._set_target: Setter
+        # True while this server itself republishes TargetValue: asyncua runs the value setter for
+        # server-side writes too, and those must not go back to the instrument as a new set-point.
+        self._publishing = False
 
     async def _setup(
         self,
@@ -236,12 +239,19 @@ class _ControlFunction(_Function):
 
     async def refresh(self) -> None:
         await self.current_node.write_value(ua.Variant(float(self._current()), ua.VariantType.Double))
-        await self.target_node.write_value(ua.Variant(float(self._target()), ua.VariantType.Double))
+        self._publishing = True
+        try:
+            await self.target_node.write_value(ua.Variant(float(self._target()), ua.VariantType.Double))
+        finally:
+            self._publishing = False
 
     def _target_setter(self, node_data: NodeData, attr: ua.AttributeIds, value: ua.DataValue) -> None:
         """Intercepts client writes to TargetValue (asyncua calls this synchronously, on the event
         loop). The instrument setters are quick, non-blocking assignments, so calling one here is
         safe. Raising a UaStatusCodeError makes asyncua reject the write."""
+        if self._publishing:
+            node_data.attributes[attr].value = value
+            return
         new_value = value.Value.Value if value.Value is not None else None
         if new_value is None:
             raise ua.UaStatusCodeError(ua.StatusCodes.BadTypeMismatch)
