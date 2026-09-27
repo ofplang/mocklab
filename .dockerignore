@@ -18,7 +18,7 @@ dev-notes
 # Sample scripts and specs are run from the host against the running stack, never inside
 # a server container.
 samples
-specs
+sila2/specs
 docs
 
 # Component tests run in the dev environment, never in an image. A server's own tests/ sits

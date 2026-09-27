@@ -24,9 +24,9 @@ config/command_durations.yaml   （ラボ全体・YAML・コメント可）
         │  docker build（builder ステージ）
         ▼
 /app/command_durations.json     （その device 1 台分・JSON・イメージに焼き込み）
-        │  Server.__init__ が読む
+        │  装置（mock_instruments）の from_environment が読む
         ▼
-Server.sleep_for("OpenDoor")    （各コマンドが自分の名前で引く）
+instrument.sleep_for("OpenDoor") （各コマンドが自分の SiLA2 コマンド名で引く。LADS 版も同じキー）
 ```
 
 - **入力が YAML なのは人が読んで書くため、出力が JSON なのはプログラムしか読まないため。**
@@ -91,7 +91,7 @@ devices:
 長い所要時間により、1 サーバーに 2 つのコマンドが重なることが現実的になります。モックの内部状態
 （protocol loaded / validated、開いている bucket など）はロック無しの素の属性なので、重なると静かに壊れます。
 
-そこで **`Server.executing()` が 1 コマンドの実行中はサーバーを占有し、後から来たコマンドを拒否します**。
+そこで **`ExecutionGuard.executing()`（`mock_instruments.runtime`）が 1 コマンドの実行中は装置を占有し、後から来たコマンドを拒否します**。
 
 ```
 CloseDoor cannot start because OpenDoor is still executing on this server
@@ -101,8 +101,8 @@ CloseDoor cannot start because OpenDoor is still executing on this server
 契約上 `StopRun` まで Status を Running のまま残すので、**Status で判定すると、その run を終わらせるための
 コマンドが必ず拒否されます**。
 
-- ガードは `_one_at_a_time` デコレータで各コマンドに付ける（本体を `with` で囲まない。
-  sila2 は実装メソッドのシグネチャを検査せずに呼ぶので安全）。
+- ガードは `one_at_a_time("<コマンド名>")` デコレータで装置モジュールの各コマンドに付ける（本体を `with` で囲まない。
+  名前は SiLA2 のコマンド名を明示的に渡す。拒否メッセージがその名前を出すため）。
 - **`Stop*` コマンドには付けない。** 止めるためのコマンドを、止めたい対象の完了まで待たせるのは本末転倒。
   なお現状のモックでは stop が実行中コマンドを実際に中断することはできない（別の制限であり、ガードとは無関係）。
 - **Ardea には Status ベースのガードが無い**。Feature に `Status` プロパティが無いので、同時実行ガードが

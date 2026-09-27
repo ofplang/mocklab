@@ -33,40 +33,57 @@ CONFIG_DIRECTORY = REPOSITORY_ROOT / "config"
 DEFAULT_PROFILE = "command_durations.yaml"
 TIMED_PROFILES = ["command_durations.realistic.yaml"]
 
-# Which device each server package acts as. The same mapping is written into each Dockerfile's
-# builder stage; this copy is what lets the coverage tests below read the implementations without
-# guessing.
-DEVICE_BY_PACKAGE = {
-    "microplate_centrifuge_server": "centrifuge",
-    "automated_thermal_cycler_server": "thermal-cycler",
-    "plateloc_server": "plateloc",
-    "automated_plate_seal_remover_server": "seal-remover",
-    "ardea_server": "ardea",
+INSTRUMENTS_DIRECTORY = REPOSITORY_ROOT / "instruments" / "mock_instruments"
+
+# Which device each instrument module is. The waits live in these modules -- the SiLA2 and LADS
+# servers only expose them -- so this is what the coverage tests below read.
+DEVICE_BY_MODULE = {
+    "centrifuge": "centrifuge",
+    "thermal_cycler": "thermal-cycler",
+    "plateloc": "plateloc",
+    "seal_remover": "seal-remover",
+    "ardea": "ardea",
 }
 
-# Calls that make a command wait: the sleep itself, and the centrifuge's two helpers which wrap
-# it (its commands share those rather than sleeping inline).
-_WAITING_CALLS = frozenset({"sleep", "_begin_running", "_begin_quiet", "sleep_for"})
+# Which instrument module each server package exposes. Every server's Dockerfile slices the
+# durations of one device at build time (`--device <id>`), and that has to be the device its
+# instrument is, or the server would be timed as something else; `test_each_server_image_slices_
+# its_own_device` holds the two together.
+MODULE_BY_SERVER = {
+    "sila2/servers/microplate_centrifuge_server": "centrifuge",
+    "sila2/servers/automated_thermal_cycler_server": "thermal_cycler",
+    "sila2/servers/plateloc_server": "plateloc",
+    "sila2/servers/automated_plate_seal_remover_server": "seal_remover",
+    "sila2/servers/ardea_server": "ardea",
+}
+
+# Calls that make a command wait, each taking the command's name as a string literal: the wait
+# itself, and the centrifuge's two helpers which wrap it (its commands share those rather than
+# waiting inline).
+_WAITING_CALLS = frozenset({"sleep_for", "_begin_running", "_begin_quiet"})
 
 
-def timed_commands(package: str) -> set[str]:
-    """Command names in `package`'s feature implementation whose body waits.
+def timed_commands(module: str) -> set[str]:
+    """Names of the commands in instrument `module` that wait, as given to the waiting calls.
 
-    Read from the source rather than by importing it: these packages are not installed in this
-    environment, and the question is a syntactic one anyway."""
-    implementation_directory = REPOSITORY_ROOT / "servers" / package / package / "feature_implementations"
+    Read from the source rather than by importing it, since the question is a syntactic one. The
+    name each call passes is the duration file's key, so collecting those literals answers
+    "which keys does this device read" directly."""
+    tree = ast.parse((INSTRUMENTS_DIRECTORY / f"{module}.py").read_text(encoding="utf-8"))
     found: set[str] = set()
-    for path in sorted(implementation_directory.glob("*_impl.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for class_node in (node for node in tree.body if isinstance(node, ast.ClassDef)):
-            for method in (node for node in class_node.body if isinstance(node, ast.FunctionDef)):
-                # SiLA2 commands are the public CamelCase methods; helpers and property getters
-                # are not commands and never appear in a duration file.
-                if method.name.startswith("_") or method.name.startswith("get_"):
-                    continue
-                calls = (sub for sub in ast.walk(method) if isinstance(sub, ast.Call))
-                if any(isinstance(call.func, ast.Attribute) and call.func.attr in _WAITING_CALLS for call in calls):
-                    found.add(method.name)
+    for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
+        if not (isinstance(call.func, ast.Attribute) and call.func.attr in _WAITING_CALLS):
+            continue
+        literals = [arg.value for arg in call.args if isinstance(arg, ast.Constant) and isinstance(arg.value, str)]
+        # A waiting call without a literal name would make the coverage below meaningless for
+        # it, so it is a failure rather than something to skip. The helpers' own internal call
+        # (`self.sleep_for(command_name)`) is the one legitimate exception.
+        if not literals:
+            assert call.args and isinstance(call.args[-1], ast.Name) and call.args[-1].id == "command_name", (
+                f"{module}.py waits without naming the command: {ast.unparse(call)}"
+            )
+            continue
+        found.update(literals)
     return found
 
 
@@ -78,26 +95,26 @@ def load_profile(name: str) -> dict:
 
 
 @pytest.mark.parametrize("profile", TIMED_PROFILES)
-@pytest.mark.parametrize("package", sorted(DEVICE_BY_PACKAGE))
-def test_every_waiting_command_has_a_duration(profile: str, package: str) -> None:
+@pytest.mark.parametrize("module", sorted(DEVICE_BY_MODULE))
+def test_every_waiting_command_has_a_duration(profile: str, module: str) -> None:
     # The failure this prevents: a command that waits but is unlisted takes no time, so its
     # Running window collapses and a polling client stops being able to see the transition.
-    device = DEVICE_BY_PACKAGE[package]
+    device = DEVICE_BY_MODULE[module]
     configured = set(slice_device(load_profile(profile), device)["commands"])
 
-    missing = timed_commands(package) - configured
+    missing = timed_commands(module) - configured
     assert not missing, f"{profile} is missing durations for {device}: {sorted(missing)}"
 
 
 @pytest.mark.parametrize("profile", TIMED_PROFILES)
-@pytest.mark.parametrize("package", sorted(DEVICE_BY_PACKAGE))
-def test_no_duration_is_configured_for_a_command_that_does_not_wait(profile: str, package: str) -> None:
+@pytest.mark.parametrize("module", sorted(DEVICE_BY_MODULE))
+def test_no_duration_is_configured_for_a_command_that_does_not_wait(profile: str, module: str) -> None:
     # The other direction, which catches a typo in a command name and an entry left behind after
     # a command stopped waiting. Either way the number would silently do nothing.
-    device = DEVICE_BY_PACKAGE[package]
+    device = DEVICE_BY_MODULE[module]
     configured = set(slice_device(load_profile(profile), device)["commands"])
 
-    unexpected = configured - timed_commands(package)
+    unexpected = configured - timed_commands(module)
     assert not unexpected, f"{profile} configures non-waiting commands for {device}: {sorted(unexpected)}"
 
 
@@ -121,9 +138,28 @@ def test_profiles_describe_only_devices_that_have_a_server(profile: str) -> None
     # commandable, so no SiLA2 server exists for it). Durations for such a device would be read
     # by nobody, and the seed-based check above cannot see that.
     configured = set(load_profile(profile).get("devices") or {})
-    served = set(DEVICE_BY_PACKAGE.values())
+    served = set(DEVICE_BY_MODULE.values())
 
     assert configured <= served, f"{profile} configures serverless devices: {sorted(configured - served)}"
+
+
+@pytest.mark.parametrize("server", sorted(MODULE_BY_SERVER))
+def test_each_server_image_slices_its_own_device(server: str) -> None:
+    # A server image bakes in the durations of whichever device its Dockerfile names. Naming the
+    # wrong one would not fail anywhere -- the server would just be timed as another instrument,
+    # or not at all -- so the Dockerfile is held to the device its instrument module is.
+    dockerfile = (REPOSITORY_ROOT / server / "Dockerfile").read_text(encoding="utf-8")
+    device = DEVICE_BY_MODULE[MODULE_BY_SERVER[server]]
+
+    assert f"--device {device} " in dockerfile, f"{server}/Dockerfile does not slice durations for {device}"
+
+
+def test_every_server_directory_is_covered() -> None:
+    # So a server added later cannot escape the check above by not being listed.
+    dockerfiles = REPOSITORY_ROOT.glob("*/servers/*/Dockerfile")
+    on_disk = {path.parent.relative_to(REPOSITORY_ROOT).as_posix() for path in dockerfiles}
+
+    assert on_disk == set(MODULE_BY_SERVER)
 
 
 def test_the_default_profile_configures_no_waiting() -> None:
@@ -133,11 +169,11 @@ def test_the_default_profile_configures_no_waiting() -> None:
     assert load_profile(DEFAULT_PROFILE)["devices"] == {}
 
 
-@pytest.mark.parametrize("package", sorted(DEVICE_BY_PACKAGE))
-def test_the_default_profile_slices_to_nothing_for_every_server(package: str) -> None:
+@pytest.mark.parametrize("module", sorted(DEVICE_BY_MODULE))
+def test_the_default_profile_slices_to_nothing_for_every_server(module: str) -> None:
     # The end a server actually sees: whatever device it asks for, the default profile gives it no
     # durations, so every command returns without waiting.
-    sliced = slice_device(load_profile(DEFAULT_PROFILE), DEVICE_BY_PACKAGE[package])
+    sliced = slice_device(load_profile(DEFAULT_PROFILE), DEVICE_BY_MODULE[module])
 
     assert sliced == {"commands": {}}
 

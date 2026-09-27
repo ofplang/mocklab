@@ -1,0 +1,21 @@
+[project]
+name = "mock-instruments"
+version = "0.0.0"
+description = "Protocol-independent behaviour of the mock instruments, shared by the SiLA2 and LADS OPC UA servers"
+# The server images run Python 3.14 and this code uses 3.12+ syntax (PEP 695 generics).
+requires-python = ">=3.12"
+dependencies = [
+    # The shared laboratory-model HTTP client. Installed from ../laboratory-client by each server
+    # Dockerfile ahead of this package, so pip resolves it locally and never looks online.
+    "laboratory-client",
+]
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mock_instruments*"]
+
+[tool.setuptools.package-data]
+mock_instruments = ["py.typed"]

@@ -1,7 +1,7 @@
 # The workspace root. It is not a distribution anyone installs -- it exists so `uv`
 # has one project to resolve the dev environment and the tooling config against
-# (the installable pieces are `laboratory_model/` and `laboratory-client/`, each
-# with its own pyproject). The name and version are therefore local identity only;
+# (the installable pieces are `laboratory_model/`, `laboratory-client/`, `instruments/`
+# and the servers, each with its own pyproject). The name and version are therefore local identity only;
 # `version` is kept as a placeholder because the repository is versioned by git tag
 # (v0.3.0 at the time of writing), not by this field.
 [project]
@@ -33,17 +33,16 @@ dev = [
 
 [tool.pytest.ini_options]
 # Tests live next to the component they cover (laboratory_model/tests/,
-# laboratory-client/tests/, tools/tests/ and servers/<name>/tests/). A component whose tests
-# import it contributes one entry here and one to `pythonpath`, which is what makes
-# `import app...` or `import laboratory_client...` resolve without installing anything.
-# `servers/ardea_server` is on the path for its station-map tests, which import
-# `ardea_server.stations` -- a module that deliberately imports nothing from sila2, so those
-# tests need neither a container nor an installed package. Its feature-definition tests only
-# read files and would have needed no path entry at all.
+# laboratory-client/tests/, instruments/tests/, tools/tests/ and sila2/servers/<name>/tests/). A
+# component whose tests import it contributes one entry here and one to `pythonpath`, which is
+# what makes `import app...` or `import mock_instruments...` resolve without installing anything.
+# The instrument behaviour in `instruments/` imports nothing from sila2 or asyncua, so its tests
+# need neither a container nor a protocol library. `sila2/servers/ardea_server/tests/` only reads
+# files (the feature definitions), so it needs no path entry at all.
 #
-# That directory shares a name with the package inside it, which the note below warns against
-# -- but the trap does not apply here: a `servers/<name>/tests/` is imported as
-# `servers.<name>.tests.<module>`, so it never claims the top-level name `ardea_server`.
+# A server directory shares a name with the package inside it, which the note below warns
+# against -- but the trap does not apply there: a `sila2/servers/<name>/tests/` is imported as
+# `sila2.servers.<name>.tests.<module>`, so it never claims the top-level package name.
 #
 # Note the hyphen in `laboratory-client`: a project directory must NOT be named after the
 # package it contains. With --import-mode=importlib below, pytest derives a test module's
@@ -53,9 +52,9 @@ dev = [
 # `from laboratory_client import ...` in the tests would then fail. Naming the directory
 # after the distribution (`laboratory-client`) makes that collision impossible, since a
 # hyphen cannot appear in a module name. `laboratory_model/` avoids the same trap by holding
-# a package called `app`.
-testpaths = ["laboratory_model/tests", "laboratory-client/tests", "tools/tests", "servers/ardea_server/tests"]
-pythonpath = ["laboratory_model", "laboratory-client", "tools", "servers/ardea_server"]
+# a package called `app`, and `instruments/` by holding one called `mock_instruments`.
+testpaths = ["laboratory_model/tests", "laboratory-client/tests", "instruments/tests", "tools/tests", "sila2/servers/ardea_server/tests"]
+pythonpath = ["laboratory_model", "laboratory-client", "instruments", "tools"]
 # -ra summarises non-passing outcomes. --import-mode=importlib keeps test modules from
 # colliding once several components have a tests/ directory holding same-named files.
 addopts = "-ra --import-mode=importlib"
@@ -66,7 +65,7 @@ addopts = "-ra --import-mode=importlib"
 # reading the laboratory-model settings straight from the environment (in laboratory_client)
 # is to keep them that way -- they previously carried a hand-written block of CLI options,
 # which contradicted this exclusion. Everything else -- the feature implementations,
-# server.py, laboratory_model/, laboratory-client/, samples/ and the tests -- is
+# server.py, instruments/, laboratory_model/, laboratory-client/, samples/ and the tests -- is
 # hand-written and is checked. Both tools below repeat this exclusion in their own syntax.
 [tool.ruff]
 line-length = 120
@@ -81,21 +80,21 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "W"]
 [tool.ruff.lint.isort]
 # None of these is installed into the dev environment, so ruff would otherwise file them
 # under third-party: `app` is the laboratory model's own package, `laboratory_client` the
-# shared HTTP client the servers import, `ardea_server` the one server package a test imports,
+# shared HTTP client, `mock_instruments` the protocol-independent instrument behaviour the servers expose,
 # and `common` the helper module the sample scripts share. Declaring them keeps our imports in
 # their own block.
-known-first-party = ["app", "ardea_server", "common", "laboratory_client", "slice_durations"]
+known-first-party = ["app", "common", "laboratory_client", "mock_instruments", "slice_durations"]
 
 # Non-strict, like the sibling repos: the point is to catch real type errors, not to
 # force annotations onto every function.
 [tool.mypy]
 python_version = "3.14"
-files = ["laboratory_model", "laboratory-client", "samples", "servers", "tools"]
+files = ["laboratory_model", "laboratory-client", "instruments", "samples", "sila2", "tools"]
 exclude = "(/generated/|__main__\\.py$)"
-# The shared client is not installed into the dev environment, so point mypy at the
-# directory that holds the package (mirroring pytest's `pythonpath` above); without this
-# the servers' `from laboratory_client import ...` would be an unresolved import.
-mypy_path = ["laboratory-client", "laboratory_model", "tools", "servers/ardea_server"]
+# The shared packages are not installed into the dev environment, so point mypy at the
+# directories that hold them (mirroring pytest's `pythonpath` above); without this
+# the servers' `from mock_instruments import ...` would be an unresolved import.
+mypy_path = ["laboratory-client", "laboratory_model", "instruments", "tools"]
 # sila2, typer and uvicorn ship no stubs we depend on.
 ignore_missing_imports = true
 warn_unused_ignores = true

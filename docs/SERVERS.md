@@ -2,15 +2,15 @@
 
 ## 概要
 
-`servers/` 配下の各 SiLA2 サーバーは、生成コードを土台にした最小限の feature 実装を持つ。実機制御そのものよりも、
+`sila2/servers/` 配下の各 SiLA2 サーバーは、生成コードを土台にした薄い feature 実装（adapter）を持ち、装置の振る舞いそのものは `instruments/`（`mock_instruments`）に置く（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」）。実機制御そのものよりも、
 **実機と同一の Feature 定義を保ったまま**、SiLA2 経由の接続・コマンド実行・状態遷移を確認しやすくすることを狙う。
 
-**`specs/` の Feature XML は編集しない。** 実機と同一でなければ drop-in 置換テストにならないため、
+**`sila2/specs/` の Feature XML は編集しない。** 実機と同一でなければ drop-in 置換テストにならないため、
 多 spot 化などの改修もコマンド署名と Feature を変えずサーバー内部で行う。
 
 ## Ardea サーバー（実在機器のモック）
 
-`servers/ardea_server/` は**実在する機器 Ardea のモック**であり、他の 5 台とは性格が違う。実機の
+`sila2/servers/ardea_server/` は**実在する機器 Ardea のモック**であり、他の 4 台とは性格が違う。実機の
 `ardea-sila2` は DENSO ロボット（ORiN b-CAP）と KEYENCE PLC（KV COM+）を同時に駆動し、
 **Feature を 9 本公開する**。モックもその 9 本を配信する。
 
@@ -23,12 +23,12 @@
 | `VariableService` / `TaskService` / `RobotService` | `bcap-sila2`（b-CAP プロバイダ） | 全コマンド未実装 |
 | `DeviceService` / `ConnectionService` | `kvcomplus-sila2`（KV COM+ プロバイダ） | 全コマンド未実装 |
 
-**Feature 定義の 2 つのコピー。** `specs/ardea_server/` にあるのは**ソース** XML（実機リポジトリからの
-コピー・読むためのもの）。実際に配信されるのは `servers/ardea_server/ardea_server/generated/<feature>/`
+**Feature 定義の 2 つのコピー。** `sila2/specs/ardea_server/` にあるのは**ソース** XML（実機リポジトリからの
+コピー・読むためのもの）。実際に配信されるのは `sila2/servers/ardea_server/ardea_server/generated/<feature>/`
 にある codegen 正規化版で、これも実機の生成物からコピーしたものなので**実機が配信するバイト列と同一**である。
-両者が同じ Feature を表しているかは `servers/ardea_server/tests/test_feature_definitions.py` が検査する。
+両者が同じ Feature を表しているかは `sila2/servers/ardea_server/tests/test_feature_definitions.py` が検査する。
 **生成コードは再生成せずコピーする**（それが同一性を構造的に保証する唯一の方法）。出典と手順は
-`specs/ardea_server/README.md`。
+`sila2/specs/ardea_server/README.md`。
 
 **未実装コマンドは `NotImplementedError`** を投げる。クライアントには
 `UndefinedExecutionError: Method is not implemented by the server` が届く（**この文言は sila2 が用意するもので、
@@ -46,7 +46,7 @@
 解決し、そこに「レール上の位置」と「到達する robot タスク」が書かれている。モックにはどちらも対応物が無いが、
 **プレートが物理的にどこにあるか**は世界モデルにあるので、等価物は名前 → location の対応表だけになる。
 
-環境変数 1 本で渡す（`servers/ardea_server/ardea_server/stations.py`）:
+環境変数 1 本で渡す（`instruments/mock_instruments/stations.py`）:
 
 ```
 ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,Base4=plateloc.stage,Base5=centrifuge.deck,Base6=thermal-cycler.block
@@ -69,7 +69,7 @@ ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,
 
 **起動時に検証して落とす**。未設定・空・`name=device.spot` でない・同じ名前が 2 回・同じ spot に 2 つの名前、は
 すべて起動失敗にする。laboratory_model 系の環境変数と違い**省略は運用モードではない** — station 名を解決できない
-搬送機は存在意義が無い。検査内容は `servers/ardea_server/tests/test_stations.py`。
+搬送機は存在意義が無い。検査内容は `instruments/tests/test_stations.py`。
 
 **実装する 3 プロパティの導出**（世界モデルに素直に対応するものだけを実装した）:
 
@@ -101,11 +101,11 @@ ARDEA_STATIONS=Base1=station.slot1,Base2=station.slot2,Base3=seal-remover.stage,
 
 ## コマンド所要時間と同時実行
 
-- 各コマンドの待ち時間は `Server.sleep_for(<コマンド名>)` で引く。値はビルド時にイメージへ焼き込まれた
+- 各コマンドの待ち時間は装置モジュール（`mock_instruments.<装置>`）が `sleep_for(<SiLA2 コマンド名>)` で引く。値はビルド時にイメージへ焼き込まれた
   `/app/command_durations.json`（ラボ全体の `config/command_durations.yaml` から切り出したもの）にある。
   **記述が無いコマンドは待たない。**
-- **1 サーバーで 2 つのコマンドが同時に実行されることは `Server.executing()` が拒否する**
-  （`_one_at_a_time` デコレータ）。判定は Status ではなく「実行中か」で行う。`Stop*` には付けない。
+- **1 台で 2 つのコマンドが同時に実行されることは `ExecutionGuard`（`mock_instruments.runtime`）が拒否する**
+  （`one_at_a_time("<コマンド名>")` デコレータ）。判定は Status ではなく「実行中か」で行う。`Stop*` には付けない。
 - 詳細と理由は `docs/TIMING.md`。
 
 ## Status の扱い

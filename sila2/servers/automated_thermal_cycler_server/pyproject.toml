@@ -1,0 +1,28 @@
+[project]
+name = "automated_thermal_cycler_server"
+version = "0.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "sila2",
+    "typer",
+    # The shared laboratory-model HTTP client, installed from ./laboratory_client by this
+    # server's Dockerfile before the server package itself (so pip resolves it locally and
+    # never looks for a `laboratory-client` release online).
+    "laboratory-client",
+    # The protocol-independent instrument behaviour this server exposes over SiLA2, installed
+    # from ./instruments by the Dockerfile the same way.
+    "mock-instruments",
+]
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["automated_thermal_cycler_server*"]
+
+[tool.setuptools.package-data]
+"automated_thermal_cycler_server.generated" = [
+    "*/*.sila.xml",
+    "*/*.proto",
+]

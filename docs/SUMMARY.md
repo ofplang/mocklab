@@ -15,13 +15,14 @@
 
 | ディレクトリ | 内容 |
 |---|---|
-| `servers/` | モック SiLA2 サーバー 5 台（Microplate Centrifuge / PlateLoc / Automated Plate Seal Remover / Automated Thermal Cycler の 4 装置＋搬送役 Ardea）。生成コードと最小限の feature 実装。**Ardea だけは実在する機器のモック**で、実機の Feature 定義 9 本をそのまま配信する（`docs/SERVERS.md`）。**station（ワークフローの入口・出口）にサーバーは無い** — ラックには commandable なものが無く、seed が spot を宣言すれば足りる |
+| `sila2/servers/` | モック SiLA2 サーバー 5 台（Microplate Centrifuge / PlateLoc / Automated Plate Seal Remover / Automated Thermal Cycler の 4 装置＋搬送役 Ardea）。生成コードと、`instruments/` へ写すだけの薄い feature 実装（adapter）。**Ardea だけは実在する機器のモック**で、実機の Feature 定義 9 本をそのまま配信する（`docs/SERVERS.md`）。**station（ワークフローの入口・出口）にサーバーは無い** — ラックには commandable なものが無く、seed が spot を宣言すれば足りる |
+| `instruments/` | **プロトコル非依存の装置の振る舞い**（パッケージ `mock_instruments`）。状態・規則・所要時間・Status 遷移・世界への作用を 1 か所に持ち、SiLA2 版と LADS OPC UA 版（導入中）の両方がこれを呼ぶ（`docs/RULES.md`「プロトコルと装置の振る舞いの分離」） |
 | `laboratory_model/` | 共有の世界状態サービス |
 | `laboratory-client/` | サーバーが世界モデルに到達するための共有パッケージ（HTTP 転送層と環境変数からの設定読み取り）。**世界の意味づけは共有せず各サーバーに残す** |
 | `config/` | 世界のシードと、コマンド所要時間のプロファイル |
 | `tools/` | ビルド時ヘルパ（所要時間の切り出し） |
 | `samples/` | 実サービスに直接接続する確認スクリプト |
-| `specs/` | 各サーバーの SiLA Feature 定義 XML（**編集しない**。実機と同一でなければ drop-in 置換テストにならない） |
+| `sila2/specs/` | 各サーバーの SiLA Feature 定義 XML（**編集しない**。実機と同一でなければ drop-in 置換テストにならない） |
 | `external/` | 直接の開発対象ではない参考用の外部実装 |
 
 ローカル実行の基本形は `docker-compose.yml`。手順は `docs/OPERATIONS.md`。
@@ -37,7 +38,7 @@
 
 各モックコマンドが何秒かかるかは、実装中のリテラルではなく**設定**として持つ。
 `config/command_durations.yaml` にラボ全体を記述し、ビルド時に device ごとに切り出してイメージへ焼き込む。
-既定プロファイルは全コマンド 0.05 秒（`samples/` が速いまま保たれる）、realistic プロファイルは
+既定プロファイルは待ち時間ゼロ（`samples/` が速いまま保たれる）、realistic プロファイルは
 ポーリングで状態遷移が観測できる秒〜数十秒。1 サーバーで 2 つのコマンドが同時に実行されることは拒否される。
 詳細は `docs/TIMING.md`。
 
